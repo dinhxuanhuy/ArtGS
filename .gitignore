@@ -13,3 +13,18 @@ utils/pointnet_lib/pointnet2.egg-info
 utils/pointnet_lib/dist
 utils/pointnet_lib/build
 ztosave/
+# local env & caches
+envs/
+.cache/
+.conda/
+# colab workflow (setup/colab-env)
+cache/
+runs/
+downloads/
+*.tar.gz
+*.whl
+.env
+*.token
+*token*.json
+*credentials*.json
+.colab-cli-oauth-config.json

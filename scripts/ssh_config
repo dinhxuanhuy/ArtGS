@@ -1,0 +1,10 @@
+# OpenSSH config for Colab runtimes (no secrets here).
+# Usage: ssh -F scripts/ssh_config <session>.colab 'cmd'
+#        rsync -e "ssh -F scripts/ssh_config" ./ <session>.colab:/content/ArtGS/
+Host *.colab
+  User root
+  ProxyCommand bash -c 'exec colab ssh --proxy-mode -s "${1%%.colab}" 2>/dev/null' _ %h
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null
+  LogLevel ERROR
+  ServerAliveInterval 30
