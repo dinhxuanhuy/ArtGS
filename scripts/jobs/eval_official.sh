@@ -8,6 +8,7 @@ CK=data/ArtGS_ckpt; RES=${RES:-1}
 if [ -z "${SCENES:-}" ]; then
   SCENES=$(cd "$CK" && ls -d */* | grep -v '/real_')
 fi
+ln -sfn "$RUN_OUT" outputs   # same convention as training jobs: outputs/ == $RUN_OUT
 T=$RUN_OUT/stage_seconds.tsv; : > "$T"; fail=0
 for ds_scene in $SCENES; do
   ds=${ds_scene%%/*}; scene=${ds_scene#*/}

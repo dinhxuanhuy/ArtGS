@@ -15,7 +15,7 @@ set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; cd "$REPO"
 JOB="${1:?usage: colab_job.sh <job.sh> [--name N] [--gpu T4] [--datasets ...] [--max-cu 5] [--max-hours 3] [--keep]}"; shift
 [ -f "$JOB" ] || { echo "no such job script: $JOB" >&2; exit 2; }
-NAME="$(basename "$JOB" .sh)"; GPU=T4; DATASETS_ARG="paris"; MAX_CU=5; MAX_HOURS=3; KEEP=0; S=""
+NAME="$(basename "$JOB" .sh)"; GPU=T4; DATASETS_ARG="paris"; MAX_CU=5; MAX_HOURS=3; KEEP=0; S=""; REMOTE=""
 while [ $# -gt 0 ]; do case "$1" in
   --name) NAME="$2"; shift 2;; --gpu) GPU="$2"; shift 2;; --datasets) DATASETS_ARG="$2"; shift 2;;
   --max-cu) MAX_CU="$2"; shift 2;; --max-hours) MAX_HOURS="$2"; shift 2;; --keep) KEEP=1; shift;;
@@ -80,10 +80,12 @@ REMOTE=$(grep -q "persistent remote:" "$REC/bootstrap.log" && sed -n 's/.*persis
 # ---- launch detached (survives ssh disconnects)
 "${RSYNC[@]}" "$JOB" "$S.colab:/content/job_$RUN_ID.sh" </dev/null
 "${SSH[@]}" "mkdir -p /content/runs/$RUN_ID && cd /content/ArtGS && \
-  nohup bash -c 'source /content/venv/bin/activate; export RUN_ID=$RUN_ID RUN_OUT=/content/runs/$RUN_ID PYTHONNOUSERSITE=1; \
+  ( setsid nohup bash -c 'source /content/venv/bin/activate; export RUN_ID=$RUN_ID RUN_OUT=/content/runs/$RUN_ID PYTHONNOUSERSITE=1; \
   s=\$(date +%s); bash /content/job_$RUN_ID.sh > /content/runs/$RUN_ID/job.log 2>&1; rc=\$?; \
   echo \"job_seconds \$((\$(date +%s)-s))\" > /content/runs/$RUN_ID/timing.txt; echo \$rc > /content/runs/$RUN_ID.exit_code' \
-  >/dev/null 2>&1 & echo launched" </dev/null
+  </dev/null >/dev/null 2>&1 & ) ; echo launched" </dev/null
+# ^ double fork: Colab's sshd waits for every child of the session, even setsid+nohup+redirects;
+#   only a re-parented grandchild lets ssh return immediately (verified on a CPU VM, 2026-11-12).
 log "job launched; tail: ssh -F scripts/ssh_config $S.colab tail -f /content/runs/$RUN_ID/job.log"
 
 # ---- monitor with caps

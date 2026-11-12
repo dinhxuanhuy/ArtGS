@@ -9,8 +9,9 @@ description: Run an ArtGS experiment on a Colab GPU end to end (write a job scri
    save the diff: every run records `git_sha` + `git_diff.patch`, so uncommitted edits are captured
    but committed ones are easier to reproduce.
 2. **Job script**: copy `scripts/jobs/smoke_paris.sh` to `scripts/jobs/<name>.sh`. Rules:
-   - write EVERYTHING under `$RUN_OUT` (model_path, logs); use `$RUN_OUT/<dataset>/<subset>/<scene>/<model>`
-     so `scripts/collect_metrics.py` finds `result.csv`;
+   - start with `ln -sfn "$RUN_OUT" outputs` and use model paths `outputs/<dataset>/<subset>/<scene>/<model>`:
+     ArtGS hard-codes the coarse location as `source_path.replace('data/','outputs/')`, and the
+     symlink makes everything land in `$RUN_OUT` (so `collect_metrics.py` finds `result.csv`);
    - append `<stage>\t<seconds>` lines to `$RUN_OUT/stage_seconds.tsv`;
    - coarse stage must run 10000 iters (train.py loads `coarse_gs/point_cloud/iteration_10000`);
    - `render.py --iteration best` only works if training passed iteration 15000 (best is

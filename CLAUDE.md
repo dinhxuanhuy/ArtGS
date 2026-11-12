@@ -53,7 +53,9 @@ Training reads only from VM local disk, never directly from Drive.
 
 ## Train / eval
 Pipeline per scene (`--dataset paris|dta|artgs --subset sapien|realscan --scene_name X`):
-1. `train_coarse.py` (10000 iters, res 2; must be 10000: train.py loads `coarse_gs/point_cloud/iteration_10000`)
+1. `train_coarse.py` (10000 iters, res 2; must be 10000: train.py loads `coarse_gs/point_cloud/iteration_10000`).
+   Model paths MUST be `outputs/<dataset>/<subset>/<scene>/<model>` (coarse path is derived from
+   `source_path` with `data/`->`outputs/`); in jobs `outputs` is a symlink to `$RUN_OUT`.
 2. `train_predict.py` (joint-type prediction, res 8)
 3. `train.py` (20000 iters, `--use_art_type_prior`; joint types read from `arguments/joint_types_*.json`)
 4. `render.py --iteration best --skip_test` -> `<model>/train/ours_best/result.csv`
@@ -79,7 +81,7 @@ Built CUDA wheels follow the same idea: key `py310-torch2.1.2-cu121-sm<arch>-<sr
 - Never commit secrets, tokens or credentials (rclone.conf, OAuth tokens, `.env`). Use env vars;
   they are gitignored. The rclone config is copied to a VM only for the session.
 - Never commit datasets, checkpoints, caches, runs, or results (`data/ outputs/ cache/ runs/ results/`).
-- The repo is public: unpublished research (core-code edits, `improve_h1/`, review notes,
+- The repo is public: unpublished research (core-code edits, review notes,
   `paper_resource/`, `research/journal.md`) stays local unless the user says otherwise.
 - Do not modify the baseline (ArtGS) method code for setup/infra work. Only add scripts/configs. If a
   source change is unavoidable, explain why and ask first. Research changes go on `exp/<idea>`.

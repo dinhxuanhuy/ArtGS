@@ -4,7 +4,11 @@
 # Runs on the VM via scripts/colab_job.sh (provides RUN_OUT, venv active).
 set -euo pipefail
 SCENE=${SCENE:-blade_103706}; DS=paris; SUB=sapien
-OUT="$RUN_OUT/$DS/$SUB/$SCENE"
+# ArtGS hard-codes the coarse model location as source_path with data/ -> outputs/
+# (train_predict.py / train.py), so model paths MUST be outputs/<ds>/<subset>/<scene>/<model>.
+# outputs/ is a symlink to $RUN_OUT so everything still lands in the run record.
+ln -sfn "$RUN_OUT" outputs
+OUT="outputs/$DS/$SUB/$SCENE"
 T=$RUN_OUT/stage_seconds.tsv; : > "$T"
 stage() { local n=$1; shift; local s=$(date +%s); echo "=== $n: $*"; "$@"; printf '%s\t%d\n' "$n" $(( $(date +%s)-s )) >> "$T"; }
 COMMON=(--dataset $DS --subset $SUB --scene_name $SCENE --random_bg_color)

@@ -79,6 +79,42 @@ Mẹo: giao việc theo **giả thuyết + tiêu chí đánh giá + ngân sách*
 loss X giảm lỗi trục khớp. Chạy blade và storage, 3 seed, tối đa 5 CU. So với baseline
 official, báo mean ± std."*
 
+### Flow một vòng nghiên cứu
+
+```
+ ① Ý tưởng           ② Code               ③ Chạy trên Colab             ④ Đánh giá            ⑤ Ghi lại
+ research/ideas.md -> nhánh exp/<ý-tưởng> -> colab_job.sh: VM mới,       -> metrics.json,       -> research/journal.md,
+ (paper: docs/        sửa code + job        môi trường ~6 phút, chạy,      leaderboard so với     giữ / bỏ / thử tiếp,
+  RELATED_WORK.md)    scripts/jobs/x.sh     kéo kết quả, TỰ TẮT VM          baseline, >= 3 seed    commit code trên exp/
+```
+
+1. **Ý tưởng**: ghi giả thuyết, metric dùng để đo, object thử, ngân sách CU vào `research/ideas.md`.
+2. **Code**: nhánh `exp/<ý-tưởng>` (không đụng `main`); bước tốn kém (mask SAM, nhãn VLM...) đi
+   qua `tools/cache.py`; viết job trong `scripts/jobs/`.
+3. **Chạy**: thử ngắn trước (1 object, ít iteration, ~0.5 CU) để bắt lỗi code, **không dùng để kết
+   luận**; rồi chạy thật (đủ iteration, các object đã chọn, 3 seed). Vượt 5 CU phải hỏi.
+4. **Đánh giá**: `python3 scripts/leaderboard.py`; báo cả chỗ tốt hơn **và tệ hơn**, kèm độ dao động
+   giữa seed. Baseline = checkpoint chính thức chạy lại trong cùng môi trường.
+5. **Ghi lại**: entry trong `research/journal.md` (giả thuyết, run, kết quả, kết luận, bước tiếp).
+
+| Người | Agent |
+|---|---|
+| Đưa ý tưởng, chọn object, đặt ngân sách | Viết code, job, chạy Colab, tắt VM |
+| Duyệt khi vượt 5 CU, dùng A100, tải > 5 GB | Ghi kết quả, so baseline, báo cả mặt xấu |
+| Quyết định giữ / bỏ ý tưởng | Ghi journal, commit trên nhánh `exp/` |
+
+Repo GitHub là **public**: nhánh `exp/` đã push thì ai cũng thấy. Ý tưởng chưa công bố nên để ở
+local hoặc một repo private riêng.
+
+### Dùng từ xa / không giữ kết nối
+
+- Việc dài (job Colab, upload Drive) nên chạy **tách khỏi phiên**: `nohup setsid <lệnh> > log 2>&1 < /dev/null &`.
+  Ngắt SSH hay tắt Claude Code thì việc vẫn chạy; `colab_job.sh` luôn tự tắt VM khi xong.
+- Giữ phiên Claude sống: chạy trong `tmux` (`tmux new -s claude`, `claude --resume`, thoát bằng
+  `Ctrl-b d`, quay lại bằng `tmux attach -t claude`).
+- Điều khiển từ trình duyệt / điện thoại: trong phiên Claude gõ `/remote-control`, rồi mở
+  claude.ai/code hoặc app Claude (cùng tài khoản). Claude vẫn chạy trên server này.
+
 ## 4. Lệnh thủ công (khi không dùng agent)
 
 ```bash
@@ -93,8 +129,10 @@ python3 scripts/leaderboard.py                               # cập nhật resu
 ```
 
 Viết job mới: copy `scripts/jobs/smoke_paris.sh`. Job chạy trên VM trong `/content/ArtGS` với
-venv đã kích hoạt; ghi **mọi** output vào `$RUN_OUT`, theo layout
-`$RUN_OUT/<dataset>/<subset>/<scene>/<model>` để `collect_metrics.py` tìm thấy `result.csv`.
+venv đã kích hoạt. **Bắt buộc** mở đầu bằng `ln -sfn "$RUN_OUT" outputs` và dùng model path
+`outputs/<dataset>/<subset>/<scene>/<model>`: code ArtGS tự suy ra chỗ để model coarse bằng cách đổi
+`data/` -> `outputs/` trong đường dẫn data, nên đặt chỗ khác là `train_predict.py`/`train.py` không tìm
+thấy. Symlink làm mọi thứ vẫn nằm trong `$RUN_OUT` (được kéo về `runs/` và lưu lên Drive).
 
 ## 5. Pipeline ArtGS và metric
 
@@ -106,6 +144,12 @@ venv đã kích hoạt; ghi **mọi** output vào `$RUN_OUT`, theo layout
 Metric (càng thấp càng tốt): `avg_angle` lỗi góc trục (độ), `avg_distance` lỗi vị trí trục,
 `avg_theta_diff` lỗi chuyển động bộ phận, `avg_CD_static/dynamic/whole` Chamfer distance.
 Baseline = checkpoint chính thức **chạy lại trong môi trường của mình**, không lấy số từ paper.
+
+**Smoke test đã kiểm chứng** (Colab T4, PARIS `blade_103706`, 2026-11-12, run
+`20261112_0818_smoke_aa7d0b9-dirty`): coarse 10k iter 228 s · predict 500 iter 77 s · train 2k iter
+127 s · render + đánh giá 435 s · bootstrap từ cache 437 s · tổng ~22 phút, **0.40 CU**. Metric (chỉ để
+kiểm tra pipeline, train quá ngắn nên KHÔNG so với baseline): axis angle 0.39°, part motion 0.0014,
+CD static 0.58, CD dynamic 13.7. Full train 20k iter ước tính thêm ~20 phút.
 
 ## 6. Dữ liệu, ghi chép, cache
 
@@ -138,19 +182,22 @@ Python 3.10 · torch 2.1.2+cu121 · numpy 1.26.4 · pillow 10.4.0 · open3d 0.18
 pytorch3d V0.7.8 · tiny-cuda-nn @3daa6e5. Colab có sẵn Python 3.13 / torch 2.14 nhưng **không
 dùng**: Pillow >= 11 làm hỏng `dataset_readers.py`, open3d/pytorch3d/tcnn chưa kiểm chứng.
 
-Thời gian bootstrap (đo trên Colab T4, 2 vCPU):
+Thời gian bootstrap **đo trên Colab T4** (2 vCPU, 2026-11-12):
 
 | Bước | Lần đầu (build) | Có wheel cache trên Drive |
 |---|---|---|
-| venv + torch + requirements | ~2 phút | ~2 phút |
-| CUDA 12.1 toolkit + g++-11 | ~3 phút | không cần |
-| diff-gaussian / simple-knn / pointnet2 | 130 s / 119 s / 210 s | vài giây (cài wheel) |
-| pytorch3d | **~25 phút** | vài giây |
-| tinycudann | ~5-10 phút (ước tính) | vài giây |
-| **Tổng** | **~45 phút, một lần cho mỗi loại GPU** | **~2-3 phút** (container mô phỏng: 106 s) |
+| venv + torch + requirements | ~110 s | ~100 s |
+| CUDA 12.1 toolkit + g++-11 | ~180 s | không cần |
+| diff-gaussian / simple-knn / pointnet2 | 130 s / 119 s / 210 s | |
+| pytorch3d | **1504 s** | 56 s cho cả 5 wheel (tải từ Drive + cài) |
+| tinycudann | 545 s | |
+| Data PARIS (zip 2.97 GB từ Drive, sha256, giải nén) | | 177 s |
+| verify_env.py | ~30 s | 29 s |
+| **Tổng** | **~48 phút, một lần cho mỗi loại GPU** | **368 s ≈ 6 phút (môi trường ~3 phút + data ~3 phút)** |
 
-Cache theo key `py310-torch2.1.2-cu121-sm<arch>-<srchash>`: T4 = sm75, L4 = sm89, A100 = sm80;
-đổi loại GPU lần đầu sẽ build lại. Build lỗi giữa chừng thì lần sau chỉ build phần còn thiếu.
+Cache theo key `py310-torch2.1.2-cu121-sm<arch>-<srchash>`: T4 = sm75 (đã có trên Drive), L4 = sm89,
+A100 = sm80; đổi loại GPU lần đầu sẽ build lại. Build lỗi giữa chừng thì lần sau chỉ build phần còn
+thiếu (mỗi wheel lưu lên Drive ngay khi build xong).
 
 ## 8. Quy tắc (agent và người đều tuân theo)
 
@@ -171,4 +218,7 @@ Cache theo key `py310-torch2.1.2-cu121-sm<arch>-<srchash>`: T4 = sm75, L4 = sm89
 | `libGL.so.1` / `libgthread` không tìm thấy | bootstrap tự `apt-get install libgl1 libglib2.0-0t64` |
 | `colab new --gpu ...` lỗi 400 | Hết quota/không có quyền GPU đó -> thử `--gpu T4` |
 | rclone báo client_id dùng chung sắp ngừng | Tạo client_id riêng, `rclone config reconnect nckh:` |
+| `train_predict.py`: `No such file ... outputs/.../coarse_gs/.../iteration_10000/point_cloud.ply` | Model path phải theo `outputs/<ds>/<subset>/<scene>/<model>`; trong job dùng `ln -sfn "$RUN_OUT" outputs` |
+| Build tinycudann: `ld: cannot find -lcuda` | Colab chỉ có `libcuda.so.1`; bootstrap link với stub `$CUDA_HOME/lib/stubs` |
+| `ssh ... 'nohup cmd &'` treo tới khi cmd xong | sshd của Colab chờ mọi tiến trình con; dùng double fork `( setsid nohup cmd </dev/null >log 2>&1 & )` |
 | CUDA OOM khi render res 1 trên GPU 8 GB | Dùng `--resolution 2` và `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` |

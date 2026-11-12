@@ -19,6 +19,24 @@ giao cho **AI agent** (Claude Code) điều phối.
   trong cùng môi trường.
 - **Hướng dẫn cho AI agent**: [`CLAUDE.md`](CLAUDE.md) + skill trong `.claude/skills/`.
 
+## Trạng thái (2026-11-12)
+
+| Hạng mục | Kết quả đã kiểm chứng trên Colab T4 |
+|---|---|
+| Dựng môi trường lần đầu (build 5 CUDA extension) | ~48 phút, một lần cho mỗi loại GPU; wheel lưu trên Drive |
+| Dựng môi trường khi có cache + tải data PARIS | **~6 phút**, `verify_env.py` ALL OK |
+| Smoke test pipeline (PARIS `blade_103706`: coarse -> predict -> train ngắn -> render + đánh giá) | chạy trọn, ~22 phút, **0.40 CU** |
+| Dữ liệu trên Drive dự án | zip của PARIS, DTA-Multi, ArtGS-Multi, checkpoint, realscan (đủ, kiểm sha256) + paper; bản giải nén đang được upload |
+| Tiếp theo | baseline: đánh giá lại checkpoint chính thức trên các scene sapien, rồi vào vòng nghiên cứu |
+
+## Quy trình nghiên cứu
+
+```
+ý tưởng -> nhánh exp/<ý-tưởng> + job -> colab_job.sh (VM mới, ~6 phút dựng, chạy, kéo kết quả, tự tắt)
+        -> metrics.json + leaderboard so với baseline (>= 3 seed) -> research/journal.md -> giữ / bỏ / thử tiếp
+```
+Chi tiết, phân vai người / agent và cách dùng từ xa (tmux, Remote Control): [`docs/AGENT_RESEARCH.md`](docs/AGENT_RESEARCH.md).
+
 ## Bắt đầu nhanh
 
 ```bash

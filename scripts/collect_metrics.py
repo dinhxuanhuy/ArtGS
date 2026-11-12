@@ -60,7 +60,7 @@ def main(rec: Path) -> dict:
     if log.exists():
         txt = log.read_text(errors="replace")
         for k in ("val_axis_ang", "val_l1", "peak_vram_mb"):
-            m = re.findall(rf"^{k}: ([-\d.eE]+)", txt, re.M)
+            m = re.findall(rf"(?:^|\r){k}: ([-\d.eE]+)", txt.replace("\r", "\n"), re.M)
             if m:
                 summary[k] = [float(x) for x in m]
     exit_code = (rec / "exit_code").read_text().strip() if (rec / "exit_code").exists() else None
