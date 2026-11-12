@@ -38,10 +38,11 @@ All pins: `requirements-colab.txt`, `scripts/bootstrap_colab.sh` (top). Local ma
 |---|---|
 | Code on VM | `/content/ArtGS` (rsynced from here, excludes in `scripts/rsync_excludes.txt`) |
 | Data on VM | `/content/data/<dataset>/<subset>/<scene>` (local disk; `ArtGS/data` symlinks to it) |
-| Drive (`nckh:` = NCKH-2027) | `data/archives/*.zip` (+SHA256SUMS), `data/processed/`, `data/raw/`, `checkpoints/ArtGS_ckpt/`, `_env_cache/wheels/<key>/`, `experiments/<RUN_ID>/` |
+| Drive (`nckh:` = NCKH-2027) | `data/archives/*.zip` (+SHA256SUMS), `data/processed/`, `data/raw/`, `checkpoints/ArtGS_ckpt/`, `_env_cache/wheels/<key>/`, `experiments/<RUN_ID>/`, `resources/papers/` |
 | Local data | `data/` (gitignored), originals in `data/_raw/` |
 | Run records | `runs/<RUN_ID>/` (job.sh, git diff, env, logs, metrics.json; files < 20 MB); full outputs on Drive `experiments/<RUN_ID>/` |
 | Results | `results/leaderboard.md` (generated), `research/journal.md` (private notes) |
+| Related papers | `docs/RELATED_WORK.md`; PDFs + text (grep-able `paper.txt`) locally in `paper_resource/` and on Drive `resources/papers/` |
 | Dataset registry | `configs/datasets.json` (URLs, sizes, sha256, archive -> dataset mapping) |
 
 Datasets: `python3 scripts/load_data.py <paris|dta|artgs|ckpt|paris_raw|dta_raw|realscan_raw>`

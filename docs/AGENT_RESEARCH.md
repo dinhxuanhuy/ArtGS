@@ -116,6 +116,7 @@ Baseline = checkpoint chính thức **chạy lại trong môi trường của m�
 | Output đầy đủ (checkpoint) | Drive `experiments/<RUN_ID>/` |
 | Bảng kết quả | `results/leaderboard.md` (sinh tự động, không commit) |
 | Nhật ký nghiên cứu | `research/journal.md`, `research/ideas.md` (riêng tư, không commit) |
+| Paper liên quan | [`docs/RELATED_WORK.md`](RELATED_WORK.md); PDF trên Drive `resources/papers/` |
 
 **Quy ước cache** cho kết quả trung gian (mask SAM, nhãn VLM, Gaussian khởi tạo...):
 `cache/<stage>/<object_id>/<config_hash>/` qua `tools/cache.py`. `config_hash` là sha256 của
