@@ -130,24 +130,35 @@ else
   export CC=gcc-11 CXX=g++-11 NVCC_PREPEND_FLAGS="-ccbin /usr/bin/g++-11"
   export TORCH_CUDA_ARCH_LIST="$CAP" TCNN_CUDA_ARCHITECTURES="$SM" FORCE_CUDA=1
   export MAX_JOBS="${MAX_JOBS:-$(nproc)}"
+  # Colab's driver ships only libcuda.so.1 (no unversioned libcuda.so), so `-lcuda` (tinycudann)
+  # fails to link. Link against the toolkit stub; at runtime the real libcuda.so.1 is used.
+  export LIBRARY_PATH="$CUDA_HOME/lib/stubs:$CUDA_HOME/lib${LIBRARY_PATH:+:$LIBRARY_PATH}"
   rm -rf "$WHEELS"; mkdir -p "$WHEELS" "$BUILD"
   PIPW=("$PY" -m pip wheel -v --no-build-isolation --no-deps -w "$WHEELS")
+  # Resume: wheels already built for this key (by an earlier, failed build) are reused, so a
+  # retry only builds what is missing. Each wheel is uploaded as soon as it is built.
+  if [ -n "$REMOTE" ] && [ -z "${FORCE_BUILD:-}" ]; then
+    "${RC[@]}" copy "${REMOTE}_env_cache/wheels/$KEY/" "$WHEELS/" --include '*.whl' 2>/dev/null || true
+    ls "$WHEELS"/*.whl >/dev/null 2>&1 && echo "[bootstrap] resuming with cached partial wheels: $(cd "$WHEELS" && ls *.whl | tr '\n' ' ')"
+  fi
 
-  build_one() {  # name, src
+  build_one() {  # name, src, wheel-prefix
+    if ls "$WHEELS/$3"-*.whl >/dev/null 2>&1; then echo "[bootstrap]   $1: cached wheel, skip"; return; fi
     local s; s=$(date +%s)
     echo "[bootstrap]   building $1"
     "${PIPW[@]}" "$2" > "$BUILD/$1.log" 2>&1 || { grep -E -B2 -A8 "error|Error" "$BUILD/$1.log" | grep -v Werror | head -60; die "build of $1 failed (log: $BUILD/$1.log)"; }
     printf 'build: %s\t%d\n' "$1" $(( $(date +%s) - s )) | tee -a "$TIMING" | awk -F'\t' '{printf "[bootstrap]   %s (%ss)\n",$1,$2}'
+    [ -n "$REMOTE" ] && "${RC[@]}" copy "$WHEELS/" "${REMOTE}_env_cache/wheels/$KEY/" --include "$3-*.whl" || true
   }
   step "build: extensions"
   for d in diff-gaussian-rasterization simple-knn; do
     rm -rf "$BUILD/$d"; cp -r "$REPO/submodules/$d" "$BUILD/$d"; rm -rf "$BUILD/$d"/build "$BUILD/$d"/*.egg-info
-    build_one "$d" "$BUILD/$d"
+    build_one "$d" "$BUILD/$d" "$(echo "$d" | tr - _)"
   done
   rm -rf "$BUILD/pointnet_lib"; cp -r "$REPO/utils/pointnet_lib" "$BUILD/pointnet_lib"
   rm -rf "$BUILD/pointnet_lib"/{build,dist,*.egg-info}
-  build_one pointnet2 "$BUILD/pointnet_lib"
-  build_one pytorch3d "git+https://github.com/facebookresearch/pytorch3d.git@$P3D_REF"
+  build_one pointnet2 "$BUILD/pointnet_lib" pointnet2
+  build_one pytorch3d "git+https://github.com/facebookresearch/pytorch3d.git@$P3D_REF" pytorch3d
   if [ ! -d "$BUILD/tiny-cuda-nn/.git" ]; then
     git clone -q https://github.com/NVlabs/tiny-cuda-nn.git "$BUILD/tiny-cuda-nn"
   fi
@@ -156,7 +167,7 @@ else
   # setuptools >= 81 dropped pkg_resources (third-party build file, not ArtGS code)
   sed -i 's/^from pkg_resources import parse_version$/from packaging.version import Version as parse_version/' \
     "$BUILD/tiny-cuda-nn/bindings/torch/setup.py"
-  build_one tinycudann "$BUILD/tiny-cuda-nn/bindings/torch"
+  build_one tinycudann "$BUILD/tiny-cuda-nn/bindings/torch" tinycudann
 
   step "build: install + save wheels"
   "${UVPIP[@]}" --no-deps --reinstall "$WHEELS"/*.whl

@@ -1,9 +1,11 @@
-# ArtGS research repo: agent guide
+# NCKH-2027 research repo: agent guide
 
-ArtGS (ICLR 2025): articulated-object reconstruction with 3D Gaussians. Fork of
-YuLiu-LY/ArtGS at github.com/dinhxuanhuy/ArtGS (**public**). Orchestration runs on this
-machine; GPU compute on Google Colab via the `colab` CLI; persistent storage on Google Drive
-folder **NCKH-2027** via rclone.
+Research on **articulated object reconstruction** (part geometry + joint parameters from multi-view
+images). Baseline method: **ArtGS** (ICLR 2025, 3D Gaussians); the ArtGS pipeline is the code in this
+repo, but the goal is to improve on it, not to maintain ArtGS. Related work: `docs/RELATED_WORK.md`.
+Repo: github.com/dinhxuanhuy/ArtGS (**public**, fork of YuLiu-LY/ArtGS, Apache-2.0: keep LICENSE and
+credit). Orchestration runs on this machine; GPU compute on Google Colab via the `colab` CLI;
+persistent storage on Google Drive folder **NCKH-2027** via rclone.
 
 ## Start a session (exact commands)
 ```bash
@@ -79,7 +81,7 @@ Built CUDA wheels follow the same idea: key `py310-torch2.1.2-cu121-sm<arch>-<sr
 - Never commit datasets, checkpoints, caches, runs, or results (`data/ outputs/ cache/ runs/ results/`).
 - The repo is public: unpublished research (core-code edits, `improve_h1/`, review notes,
   `paper_resource/`, `research/journal.md`) stays local unless the user says otherwise.
-- Do not modify ArtGS core method code for setup/infra work. Only add scripts/configs. If a
+- Do not modify the baseline (ArtGS) method code for setup/infra work. Only add scripts/configs. If a
   source change is unavoidable, explain why and ask first. Research changes go on `exp/<idea>`.
 - If any step fails twice, stop and report the error and what you tried instead of looping.
 - `colab drivemount` cannot be used headlessly (needs a browser click per VM); use rclone.

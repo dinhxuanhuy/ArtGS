@@ -1,6 +1,7 @@
-# Nghiên cứu ArtGS cùng AI Agent trên Google Colab
+# Nghiên cứu cùng AI Agent trên Google Colab (NCKH-2027)
 
-Hướng dẫn dùng repo này để làm nghiên cứu (tái lập ArtGS, thử ý tưởng cải tiến, đánh giá)
+Hướng dẫn dùng repo này để nghiên cứu tái tạo vật thể có khớp (tái lập baseline ArtGS, thử ý tưởng
+cải tiến, đánh giá)
 với một AI agent (Claude Code) điều phối từ máy local, GPU chạy trên **Google Colab** qua
 [Colab CLI](https://pypi.org/project/google-colab-cli/), dữ liệu và cache lưu trên
 **Google Drive** qua rclone.
@@ -137,9 +138,19 @@ Python 3.10 · torch 2.1.2+cu121 · numpy 1.26.4 · pillow 10.4.0 · open3d 0.18
 pytorch3d V0.7.8 · tiny-cuda-nn @3daa6e5. Colab có sẵn Python 3.13 / torch 2.14 nhưng **không
 dùng**: Pillow >= 11 làm hỏng `dataset_readers.py`, open3d/pytorch3d/tcnn chưa kiểm chứng.
 
-Thời gian bootstrap (đo trên container Ubuntu 24.04 mô phỏng Colab; số đo trên T4 sẽ cập nhật):
-lần đầu build ~8 phút với 20 CPU (T4 Colab có 2 CPU nên lâu hơn đáng kể); khi đã có wheel cache:
-**~2 phút** đến lúc `verify_env.py` báo ALL OK.
+Thời gian bootstrap (đo trên Colab T4, 2 vCPU):
+
+| Bước | Lần đầu (build) | Có wheel cache trên Drive |
+|---|---|---|
+| venv + torch + requirements | ~2 phút | ~2 phút |
+| CUDA 12.1 toolkit + g++-11 | ~3 phút | không cần |
+| diff-gaussian / simple-knn / pointnet2 | 130 s / 119 s / 210 s | vài giây (cài wheel) |
+| pytorch3d | **~25 phút** | vài giây |
+| tinycudann | ~5-10 phút (ước tính) | vài giây |
+| **Tổng** | **~45 phút, một lần cho mỗi loại GPU** | **~2-3 phút** (container mô phỏng: 106 s) |
+
+Cache theo key `py310-torch2.1.2-cu121-sm<arch>-<srchash>`: T4 = sm75, L4 = sm89, A100 = sm80;
+đổi loại GPU lần đầu sẽ build lại. Build lỗi giữa chừng thì lần sau chỉ build phần còn thiếu.
 
 ## 8. Quy tắc (agent và người đều tuân theo)
 

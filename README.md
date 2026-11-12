@@ -1,135 +1,73 @@
-> **Fork note (dinhxuanhuy/ArtGS):** this fork adds a reproducible research setup for running
-> ArtGS on Google Colab GPUs with an AI agent (Claude Code): pinned environment, cached CUDA
-> extensions, dataset registry with checksums, one-command experiments and result tracking.
-> Guide (Vietnamese): [`docs/AGENT_RESEARCH.md`](docs/AGENT_RESEARCH.md) · agent contract: [`CLAUDE.md`](CLAUDE.md).
-> Everything below is the original README.
+# NCKH-2027: Tái tạo vật thể có khớp (Articulated Object Reconstruction)
 
+Repo nghiên cứu về **dựng lại vật thể có khớp** (tủ, ngăn kéo, laptop, kéo...) từ ảnh đa góc:
+hình học từng bộ phận + tham số khớp (loại khớp, trục, trạng thái chuyển động) để tạo bản sao
+số tương tác được. Phương pháp nền (baseline) là **ArtGS** (ICLR 2025, 3D Gaussian Splatting);
+repo đóng gói một quy trình nghiên cứu **tái lập được**, chạy trên **GPU Google Colab** và có thể
+giao cho **AI agent** (Claude Code) điều phối.
 
-<div align="center">
+## Repo có gì
 
-# **ArtGS**: Building Interactable Replicas of Complex Articulated Objects via Gaussian Splatting
-# ICLR 2025
+- **Baseline ArtGS** đầy đủ: `train_coarse.py` -> `train_predict.py` -> `train.py` -> `render.py`.
+- **Môi trường ghim phiên bản** (Python 3.10, torch 2.1.2+cu121, 5 CUDA extension) dựng tự động
+  trên VM Colab; extension build một lần rồi cache wheel trên Google Drive.
+- **Dữ liệu có kiểm soát**: danh mục dataset (PARIS, DTA-Multi, ArtGS-Multi, checkpoint chính thức)
+  với sha256, tải và giải nén bằng một lệnh.
+- **Thí nghiệm một lệnh**: tạo VM -> dựng môi trường -> chạy job -> kéo log/metric về -> **tắt VM**,
+  có giới hạn compute unit và ghi chép đầy đủ (commit, diff, môi trường, metric).
+- **Đánh giá và so sánh**: `metrics.json` cho mỗi run, bảng leaderboard so với baseline chạy lại
+  trong cùng môi trường.
+- **Hướng dẫn cho AI agent**: [`CLAUDE.md`](CLAUDE.md) + skill trong `.claude/skills/`.
 
-<div align="center" margin-bottom="6em">
-    <span class="author-block">
-        <a href="https://yuliu-ly.github.io" target="_blank">Yu Liu✶</a><sup>1,2</sup>,</span>
-    <span class="author-block">
-        <a href="https://buzz-beater.github.io" target="_blank">Baoxiong Jia✶</a><sup>2</sup>,</span>
-    <span class="author-block">
-        <a href="https://github.com/Jason-aplp" target="_blank">Ruijie Lu</a><sup>2,3</sup>,</span>
-    <span class="author-block">
-        <a href="https://dali-jack.github.io/Junfeng-Ni" target="_blank">Junfeng Ni</a><sup>1,2</sup>,</span>
-    <span class="author-block">
-        <a href="https://zhusongchun.net" target="_blank">Song-Chun Zhu</a><sup>1,2,3</sup>,</span>
-    <span class="author-block">
-        <a href="https://siyuanhuang.com" target="_blank">Siyuan Huang</a><sup>2</sup></span>
-    <br>
-    <p style="font-size: 0.9em; padding: 0.5em 0;">✶ indicates equal contribution</p>
-    <span class="author-block">
-        <sup>1</sup>Tsinghua University &nbsp&nbsp 
-        <sup>2</sup>National Key Lab of General AI, BIGAI &nbsp&nbsp 
-        <sup>3</sup>Peking University
-    </span>
+## Bắt đầu nhanh
 
-[Website](https://articulate-gs.github.io/) | [Arxiv](https://arxiv.org/abs/2502.19459) | [Data](https://huggingface.co/datasets/YuLiu/ArtGS-Dataset)
-</div>
-</div>
-
-
-![overview](assets/images/method.png)
-
-## Reconstruct Interactable Replicas
-
-<video controls>
-  <source src="assets/videos/demo.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
-
-<img src="assets/videos/artgs.gif" width="100%" />
-
-## Environment Setup
-We provide all environment configurations in ``requirements.txt``. To install all packages, you can create a conda environment and install the packages as follows: 
 ```bash
-git clone git@github.com:YuLiu-LY/ArtGS.git --recursive
-cd ArtGS
-
-conda create -n artgs python=3.10
-conda activate artgs
-conda install pytorch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1 pytorch-cuda=12.1 -c pytorch -c nvidia
-pip install -r requirements.txt
-
-# install pytorch3d and tiny-cuda-nn
-pip install git+https://github.com/facebookresearch/pytorch3d.git
-pip install git+https://github.com/NVlabs/tiny-cuda-nn/#subdirectory=bindings/torch
-
-# build pointnet_lib for nearest farthest point sampling
-cd utils/pointnet_lib
-python setup.py install
-cd ../..
-
-# a modified gaussian splatting (+ depth, alpha rendering)
-pip install ./submodules/diff-gaussian-rasterization
-
-# simple-knn
-pip install ./submodules/simple-knn
+git clone --recursive git@github.com:dinhxuanhuy/ArtGS.git && cd ArtGS
+bash scripts/setup_local.sh                     # Colab CLI + kiểm tra đăng nhập
+colab --auth=oauth2 sessions                    # đăng nhập Google (một lần)
+# (khuyên dùng) cấu hình rclone remote "nckh" tới folder Drive dự án, xem docs/AGENT_RESEARCH.md
+bash scripts/colab_job.sh scripts/jobs/smoke_paris.sh --gpu T4 --datasets "paris"
 ```
-In our experiments, we used NVIDIA CUDA 12.1 on Ubuntu 22.04. You may need to modify the installation command according to your CUDA version.
 
-## Data Preparation 
-Download the data from [GoogleDrive](https://drive.google.com/drive/folders/1h2axr5TCYKnYHZ8ZPTJeb5qTm-f7UNEG?usp=sharing) or [HuggingFace](https://huggingface.co/datasets/YuLiu/ArtGS-Dataset).
+Làm việc với agent: mở `claude` trong thư mục repo và giao việc, ví dụ *"chạy baseline từ
+checkpoint chính thức trên PARIS"* hoặc *"thử ý tưởng X trên 2 object, 3 seed, tối đa 5 CU"*.
 
-## Training
-We provide the following files and scripts for training:
- - ``train_coarse.py`` & ``scripts/coarse.sh`` : training the coarse single state Gaussians.
- - ``train_predict.py`` & ``scripts/predict.sh``: predicting the joint types.
- - ``train.py`` & ``scripts/train.sh``: training the full model.
+## Tài liệu
 
-Please run ``scripts/coarse.sh`` to build canonical Gaussian and ``scripts/predict.sh`` to predict joint types before running ``scripts/train.sh``.
+| Tài liệu | Nội dung |
+|---|---|
+| [`docs/AGENT_RESEARCH.md`](docs/AGENT_RESEARCH.md) | Hướng dẫn đầy đủ: kiến trúc, cài đặt, quy trình hằng ngày với agent, dữ liệu, cache, xử lý sự cố |
+| [`docs/RELATED_WORK.md`](docs/RELATED_WORK.md) | Paper liên quan: ArtGS, REArtGS, REArtGS++, Rest2Art |
+| [`CLAUDE.md`](CLAUDE.md) | "Hợp đồng" cho AI agent: lệnh, phiên bản, đường dẫn, quy tắc |
+| [`docs/ARTGS_README.md`](docs/ARTGS_README.md) | README gốc của ArtGS (cài đặt, dữ liệu, huấn luyện, công cụ trực quan hoá) |
 
-## Evaluation
-We provide ``render.py`` and script ``scripts/eval.sh`` for evaluation. You can download the checkpoints from [GoogleDrive](https://drive.google.com/file/d/19EjgNX-vzXVpMagvroChZnaB4RhUVMG4/view?usp=sharing) or [HuggingFace](https://huggingface.co/datasets/YuLiu/ArtGS-Dataset).
-We also provide ``render_video.py`` and ``render.sh`` for rendering videos.
+## Cấu trúc
 
-
-## Potential Improvements
-We found the following tricks are useful for reconstructing self-captured real-world objects.
-
-**Using Point Cloud.**
-
-We provide ``data_tools/process_artgs.py`` for calculating the point cloud from the depths.
-Use flag ``--init_from_pcd`` to train the coarse single state Gaussians with point cloud.
-
-**Manually Correcting the Centers.**
-
-Real-world multi-part objects may have occlusions caused by other objects or their parts. The occlusions may lead to significant differences between the two single-state Gaussians, making the Spectral Clustering fail to find suitable centers of parts. We can manually correct the centers of parts by visualizing the initialized canonical Gaussians and centers in ``vis_utils/vis_init_cano.ipynb``.
-
-**Using Monocular Depth for Training.**
-
-We tried to use monocular depth estimated by [DepthAnythingV2](https://github.com/DepthAnything/Depth-Anything-V2) to train the model, which slightly improves the performance. 
-
-## Real-world Data
-We provide the real-world data scanned through our iPad for the above demo in [HuggingFace](https://huggingface.co/datasets/YuLiu/ArtGS-Dataset). Note, the camera poses and depths provided by the iPad have some errors that may lead to training collapse. Thus, we do not use the depth for supervision. Additionally, as mentioned in Figure A.1 in our paper, clustering-derived part centers may be inaccurate due to sensor noise, occlusion, and varying
-illumination conditions. Manual correction of erroneous part centers before training yields improved results. We also recommend using a point cloud to initialize the single-state Gaussian and using a monocular depth loss to train the model. 
-
-
-## Useful Tools
-We provide some useful tools for visualization in ``vis_utils``.
-
-``canonicalize_mesh.py`` can canonicalize the mesh and joint axes, rescaling objects and moving them to specific locations.
-
-``demo_gen_glb.py`` can be used to generate dynamic meshes as GLB files in Blender.
-
-``json2urdf`` can be used to convert json files and meshes reconstructed by artgs to URDF files.
-
-``vis_artgs.ipynb`` can be used to visualize the optimized Gaussians, centers, part-segmentation and joint axes.
-
-``vis_init_cano.ipynb`` can be used to visualize the initialized canonical Gaussians, centers, and part-segmentation.
-
-``vis_camera.ipynb`` can be used to visualize the camera poses and meshes.
-
-## Citation
-If you find our paper and/or code helpful, please consider citing:
 ```
+train_coarse.py, train_predict.py, train.py, render.py   pipeline ArtGS (baseline)
+scene/ gaussian_renderer/ utils/ arguments/ submodules/  mã nguồn ArtGS + CUDA extension
+scripts/
+  setup_local.sh  bootstrap_colab.sh  colab_up.sh  colab_down.sh  colab_job.sh   Colab
+  load_data.py  drive_publish_data.sh                                             dữ liệu
+  collect_metrics.py  leaderboard.py                                              kết quả
+  jobs/            mẫu job (smoke test, baseline từ checkpoint chính thức)
+  hooks/           hook cho Claude Code (cảnh báo VM còn chạy, chặn commit dữ liệu/secret)
+tools/cache.py     cache kết quả trung gian: cache/<stage>/<object_id>/<config_hash>/
+configs/datasets.json   danh mục dataset (URL, kích thước, sha256)
+docs/              hướng dẫn và tài liệu tham khảo
+```
+
+Không commit: dữ liệu, checkpoint, cache, `runs/`, `results/`, token. Ghi chép nghiên cứu
+(`research/`) để ở local.
+
+## Ghi công và giấy phép
+
+Mã nguồn phương pháp nền là **ArtGS** của Yu Liu, Baoxiong Jia, Ruijie Lu, Junfeng Ni,
+Song-Chun Zhu, Siyuan Huang ([YuLiu-LY/ArtGS](https://github.com/YuLiu-LY/ArtGS),
+[paper](https://arxiv.org/abs/2502.19459)), phát hành theo giấy phép Apache-2.0 ([`LICENSE`](LICENSE)).
+Repo này giữ nguyên giấy phép đó cho phần mã gốc. Nếu dùng ArtGS, hãy trích dẫn:
+
+```bibtex
 @inproceedings{liu2025building,
   title={Building Interactable Replicas of Complex Articulated Objects via Gaussian Splatting},
   author={Liu, Yu and Jia, Baoxiong and Lu, Ruijie and Ni, Junfeng and Zhu, Song-Chun and Huang, Siyuan},
@@ -137,7 +75,3 @@ If you find our paper and/or code helpful, please consider citing:
   year={2025},
 }
 ```
-
-## Acknowledgement
-This code heavily used resources from [SC-GS](https://github.com/yihua7/SC-GS), [BO-QSA](https://github.com/YuLiu-LY/BO-QSA), [DigitalTwinArt](https://github.com/NVlabs/DigitalTwinArt), [PARIS](https://github.com/3dlg-hcvc/paris), [reart](https://github.com/stevenlsw/reart), [lab4d](https://github.com/lab4d-org/lab4d). We thank the authors for open-sourcing their awesome projects.
-
