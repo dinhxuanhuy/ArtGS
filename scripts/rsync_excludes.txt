@@ -1,0 +1,22 @@
+# Paths never sent to the Colab VM (data comes from load_data.py; outputs pulled back separately)
+.git
+data/
+outputs/
+envs/
+.cache/
+.conda/
+cache/
+runs/
+logs/
+downloads/
+paper_resource/
+assets/
+__pycache__/
+*.pyc
+build/
+dist/
+*.egg-info/
+*.whl
+*.zip
+*.tar
+.env

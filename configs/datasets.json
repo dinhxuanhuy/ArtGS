@@ -1,0 +1,79 @@
+{
+  "_comment": "Dataset registry for scripts/load_data.py. sha256: HF LFS oid for HF files; computed locally for PARIS/DTA originals. 'provides' maps dataset -> path prefix inside the archive. Drive mirror: NCKH-2027/data/archives/<archive name>.",
+  "archives": {
+    "ArtGS_data.zip": {
+      "url": "https://huggingface.co/datasets/YuLiu/ArtGS-Dataset/resolve/main/ArtGS_data.zip",
+      "size": 2967207942,
+      "sha256": "24be74f3488aac31e4f81fd8c3fb84cf9384cdc9af19a3fc53d3809c658d279e",
+      "provides": {
+        "paris": "ArtGS_raw_data/paris/",
+        "dta": "ArtGS_raw_data/dta/",
+        "artgs": "ArtGS_raw_data/artgs/"
+      }
+    },
+    "ArtGS_ckpt.zip": {
+      "url": "https://huggingface.co/datasets/YuLiu/ArtGS-Dataset/resolve/main/ArtGS_ckpt.zip",
+      "size": 929602314,
+      "sha256": "3bbdb1b282d4d0bb23da6c524d465e8e9e6b9dc867d35f66f05f775c14187aec",
+      "provides": {
+        "ckpt": "ArtGS_ckpt/"
+      }
+    },
+    "realscan.zip": {
+      "url": "https://huggingface.co/datasets/YuLiu/ArtGS-Dataset/resolve/main/realscan.zip",
+      "size": 2125546106,
+      "sha256": "5f1cff4cf718e06ed907db38ede8ff355bc7203f5eb0602d472358ff8039536e",
+      "provides": {
+        "realscan_raw": "realscan/"
+      }
+    },
+    "PARIS_dataset.zip": {
+      "url": "https://aspis.cmpt.sfu.ca/projects/paris/dataset.zip",
+      "size": 2242432542,
+      "sha256": "b8e1d1ce5fcd2af0bfafcbba5bb814ed02554d9d998256a63b5e8775a35d01fe",
+      "provides": {
+        "paris_raw": ""
+      },
+      "note": "origin server is throttled (~45 KB/s/conn); prefer the Drive mirror or scripts/fetch_paris.sh"
+    },
+    "DTA_multi_part.tar": {
+      "url": null,
+      "size": 124482226,
+      "sha256": "c947953155388dfdebfa1653c6b4cf3a09a4552b301d71e096474a346e9a790d",
+      "provides": {
+        "dta_raw": "multi_part/"
+      },
+      "note": "from NVlabs/DigitalTwinArt Google Drive (multi_part.tar); no stable direct URL, use the Drive mirror"
+    }
+  },
+  "datasets": {
+    "paris": {
+      "archive": "ArtGS_data.zip",
+      "dest": "paris"
+    },
+    "dta": {
+      "archive": "ArtGS_data.zip",
+      "dest": "dta"
+    },
+    "artgs": {
+      "archive": "ArtGS_data.zip",
+      "dest": "artgs"
+    },
+    "ckpt": {
+      "archive": "ArtGS_ckpt.zip",
+      "dest": "ArtGS_ckpt"
+    },
+    "realscan_raw": {
+      "archive": "realscan.zip",
+      "dest": "ArtGS-realscan"
+    },
+    "paris_raw": {
+      "archive": "PARIS_dataset.zip",
+      "dest": "PARIS"
+    },
+    "dta_raw": {
+      "archive": "DTA_multi_part.tar",
+      "dest": "DTA-Multi"
+    }
+  }
+}

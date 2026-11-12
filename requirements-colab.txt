@@ -1,0 +1,38 @@
+# Pinned deps for the ArtGS Colab venv (Python 3.10). Mirrors the local env that
+# passes verify_env.py. torch/torchvision are installed separately by
+# scripts/bootstrap_colab.sh from the cu121 index:
+#   torch==2.1.2+cu121  torchvision==0.16.2+cu121
+# CUDA extensions (diff-gaussian-rasterization, simple-knn, pointnet2, pytorch3d,
+# tinycudann) are installed from cached wheels or built by the bootstrap.
+numpy==1.26.4
+pillow==10.4.0            # dataset_readers.py needs Image.fromarray(arr, mode) (<11)
+opencv-python==4.10.0.84
+scipy==1.13.1
+tensorboard==2.16.2
+tqdm==4.67.3
+pytransform3d==3.17.0
+imageio==2.34.1
+imageio-ffmpeg==0.6.0
+plyfile==1.0.3
+piq==0.8.0
+lpips==0.1.4
+matplotlib==3.5.3
+scikit-image==0.22.0
+seaborn==0.13.2
+open3d==0.18.0
+pytorch-lightning==2.4.0
+lightning-utilities==0.15.3
+torchmetrics==1.9.0
+scikit-learn==1.5.0
+trimesh==4.5.1
+moviepy==1.0.3
+pandas==2.3.3
+joblib==1.5.3
+# pytorch3d runtime deps (pytorch3d is installed --no-deps)
+iopath==0.1.10
+fvcore==0.1.5.post20221221
+# build tooling
+ninja==1.13.0
+packaging==26.0
+setuptools==69.5.1
+wheel==0.48.0

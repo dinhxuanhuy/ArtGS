@@ -1,0 +1,59 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(colab sessions)",
+      "Bash(colab usage)",
+      "Bash(colab status *)",
+      "Bash(colab log *)",
+      "Bash(colab stop *)",
+      "Bash(ssh -F scripts/ssh_config *)",
+      "Bash(rclone lsf *)",
+      "Bash(rclone about *)",
+      "Bash(rclone check *)",
+      "Bash(bash scripts/colab_up.sh *)",
+      "Bash(bash scripts/colab_down.sh *)",
+      "Bash(bash scripts/colab_job.sh *)",
+      "Bash(python3 scripts/collect_metrics.py *)",
+      "Bash(python3 scripts/leaderboard.py *)",
+      "Bash(python3 scripts/load_data.py *)",
+      "Bash(python3 tools/cache.py *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/scripts/hooks/guard_git.py\"",
+            "if": "Bash(git *)",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/hooks/colab_sessions_check.sh\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/hooks/colab_sessions_check.sh\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

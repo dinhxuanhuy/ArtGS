@@ -1,3 +1,9 @@
+> **Fork note (dinhxuanhuy/ArtGS):** this fork adds a reproducible research setup for running
+> ArtGS on Google Colab GPUs with an AI agent (Claude Code): pinned environment, cached CUDA
+> extensions, dataset registry with checksums, one-command experiments and result tracking.
+> Guide (Vietnamese): [`docs/AGENT_RESEARCH.md`](docs/AGENT_RESEARCH.md) · agent contract: [`CLAUDE.md`](CLAUDE.md).
+> Everything below is the original README.
+
 
 <div align="center">
 

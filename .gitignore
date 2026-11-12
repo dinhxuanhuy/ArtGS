@@ -28,3 +28,8 @@ downloads/
 *token*.json
 *credentials*.json
 .colab-cli-oauth-config.json
+# private research notes + generated results (repo is public)
+research/*
+!research/README.md
+results/*
+!results/README.md
