@@ -59,7 +59,7 @@ cleanup() {
       nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader; pip freeze 2>/dev/null" > "$REC/env.txt" </dev/null 2>/dev/null
     if "${SSH[@]}" 'test -s /root/.config/rclone/rclone.conf' </dev/null 2>/dev/null; then
       log "uploading full outputs to ${REMOTE}experiments/$RUN_ID/"
-      "${SSH[@]}" "rclone copy /content/runs/$RUN_ID ${REMOTE}experiments/$RUN_ID --transfers 8 -q" </dev/null \
+      "${SSH[@]}" "rclone copy /content/runs/$RUN_ID ${REMOTE}experiments/$RUN_ID --transfers 16 -q --exclude '**/ours_*/renders/**' --exclude '**/ours_*/gt/**' --exclude '**/ours_*/depth/**'" </dev/null \
         && echo "${REMOTE}experiments/$RUN_ID" > "$REC/drive_path"
     fi
     if [ "$KEEP" = 1 ]; then log "--keep: session $S left running. Stop it: scripts/colab_down.sh $S"
@@ -89,7 +89,13 @@ REMOTE=$(grep -q "persistent remote:" "$REC/bootstrap.log" && sed -n 's/.*persis
 log "job launched; tail: ssh -F scripts/ssh_config $S.colab tail -f /content/runs/$RUN_ID/job.log"
 
 # ---- monitor with caps
+# no errexit from here on: one refused ssh (Colab limits concurrent SSH connections, exit 255) used to
+# kill this driver, whose EXIT trap then stopped the VM in the middle of the job
+set +e
 R=$(rate); R=${R:-2}; python3 -c "import sys; sys.exit(not float('$R') > 0)" || R=2
+# the account rate covers every running VM: divide by their number so parallel jobs keep their own cap
+NS=$(colab sessions 2>/dev/null | grep -c '^\[' || true); NS=${NS:-1}; [ "$NS" -ge 1 ] || NS=1
+R=$(python3 -c "print(float('$R') / $NS)")
 LIMIT=$(python3 -c "print(int(min($MAX_HOURS*3600, $MAX_CU/float('$R')*3600)))")
 log "usage rate ${R} CU/h -> job time limit ${LIMIT}s"
 t0=$(date +%s)

@@ -39,6 +39,14 @@ else
   REMOTE=none
 fi
 
+# HuggingFace token (gated models such as facebook/sam3): copied only if it exists locally,
+# never written into the repo; it lives on the VM until the VM is stopped.
+HF_TOKEN_FILE="${HF_TOKEN_PATH:-$HOME/.cache/huggingface/token}"
+if [ -s "$HF_TOKEN_FILE" ]; then
+  ts "installing HF token on VM"
+  "${SSH[@]}" 'umask 077; mkdir -p /root/.cache/huggingface; cat > /root/.cache/huggingface/token' < "$HF_TOKEN_FILE"
+fi
+
 ts "syncing code"
 "${RSYNC[@]}" --exclude-from=scripts/rsync_excludes.txt ./ "$S.colab:/content/ArtGS/" </dev/null
 [ "$SYNC_ONLY" = 1 ] && { ts "sync done"; exit 0; }

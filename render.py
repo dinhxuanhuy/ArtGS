@@ -192,6 +192,9 @@ def render_set(args, load2gpt_on_the_fly, name, iteration, views, gaussians, pip
     
     save_dir = os.path.join(model_path, name, "ours_{}".format(iteration))
     makedirs(save_dir, exist_ok=True)
+    import pickle  # semart: full predicted joints for semart/eval_robust.py (K may differ from GT)
+    with open(os.path.join(save_dir, 'pred_joints.pkl'), 'wb') as f:
+        pickle.dump({'types': pred_joint_types, 'joints': pred_joint_list}, f)
     mesh_path = os.path.join(model_path, name, "ours_{}".format(iteration), "meshes")
     makedirs(mesh_path, exist_ok=True)
 

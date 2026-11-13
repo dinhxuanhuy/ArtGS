@@ -6,6 +6,9 @@ số tương tác được. Phương pháp nền (baseline) là **ArtGS** (ICLR 
 repo đóng gói một quy trình nghiên cứu **tái lập được**, chạy trên **GPU Google Colab** và có thể
 giao cho **AI agent** (Claude Code) điều phối.
 
+> **Nhánh `SemArt`:** thêm phương pháp SemArt (VLM + SAM3 làm prior cho part, kiểm chứng bằng chuyển động).
+> Cùng một code train được ArtGS gốc hoặc SemArt tuỳ config: xem [`SEMART.md`](SEMART.md).
+
 ## Repo có gì
 
 - **Baseline ArtGS** đầy đủ: `train_coarse.py` -> `train_predict.py` -> `train.py` -> `render.py`.

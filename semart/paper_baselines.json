@@ -1,0 +1,607 @@
+{
+ "_sources": {
+  "ArtGS (paper, depth)": "ArtGS ICLR'25 Tab.1 (PARIS), Tab.2 (DTA, per-part mean), Tab.3 (ArtGS-Multi); depth supervision ON, res 1, GT-selected 'best' ckpt; Axis Pos x10 scene units",
+  "ArtGS (REArtGS++ tab, no depth)": "REArtGS++ CVPR'26 Tab.1/2, ArtGS re-run WITHOUT depth; Axis Pos in mm",
+  "REArtGS (REArtGS++ tab, no depth)": "REArtGS NeurIPS'25 as re-run in REArtGS++ Tab.1/2, no depth; Axis Pos in mm",
+  "REArtGS++ (paper, no depth)": "REArtGS++ CVPR'26 Tab.1/2, no depth; Axis Pos in mm; '<0.01' stored as 0.005"
+ },
+ "_note": "Table 3 of ArtGS and Tab.2 of REArtGS++ print 'Storage 47468' = storage_47648. Multi-part metrics are means over movable parts.",
+ "paris/sapien/foldchair_102255": {
+  "ArtGS (paper, depth)": {
+   "ang": 0.01,
+   "pos": 0.0,
+   "motion": 0.03,
+   "CDs": 0.26,
+   "CDm": 0.54,
+   "CDw": 0.43
+  },
+  "ArtGS (REArtGS++ tab, no depth)": {
+   "ang": 0.01,
+   "pos": 0.06,
+   "motion": 0.03,
+   "CDs": 0.16,
+   "CDm": 0.52,
+   "CDw": 0.44
+  },
+  "REArtGS (REArtGS++ tab, no depth)": {
+   "ang": 0.01,
+   "pos": 6.24,
+   "motion": 0.31,
+   "CDs": 0.31,
+   "CDm": 0.3,
+   "CDw": 0.7
+  },
+  "REArtGS++ (paper, no depth)": {
+   "ang": 0.005,
+   "pos": 0.37,
+   "motion": 0.02,
+   "CDs": 0.27,
+   "CDm": 0.77,
+   "CDw": 0.51
+  }
+ },
+ "paris/sapien/fridge_10905": {
+  "ArtGS (paper, depth)": {
+   "ang": 0.03,
+   "pos": 0.0,
+   "motion": 0.04,
+   "CDs": 0.52,
+   "CDm": 0.21,
+   "CDw": 0.58
+  },
+  "ArtGS (REArtGS++ tab, no depth)": {
+   "ang": 0.03,
+   "pos": 0.43,
+   "motion": 0.03,
+   "CDs": 1.89,
+   "CDm": 1.4,
+   "CDw": 2.01
+  },
+  "REArtGS (REArtGS++ tab, no depth)": {
+   "ang": 0.02,
+   "pos": 0.15,
+   "motion": 0.23,
+   "CDs": 1.53,
+   "CDm": 0.66,
+   "CDw": 1.64
+  },
+  "REArtGS++ (paper, no depth)": {
+   "ang": 0.01,
+   "pos": 0.34,
+   "motion": 0.005,
+   "CDs": 0.97,
+   "CDm": 1.25,
+   "CDw": 1.2
+  }
+ },
+ "paris/sapien/laptop_10211": {
+  "ArtGS (paper, depth)": {
+   "ang": 0.01,
+   "pos": 0.01,
+   "motion": 0.02,
+   "CDs": 0.63,
+   "CDm": 0.13,
+   "CDw": 0.5
+  },
+  "ArtGS (REArtGS++ tab, no depth)": {
+   "ang": 0.005,
+   "pos": 0.94,
+   "motion": 0.03,
+   "CDs": 0.8,
+   "CDm": 0.98,
+   "CDw": 0.96
+  },
+  "REArtGS (REArtGS++ tab, no depth)": {
+   "ang": 0.02,
+   "pos": 1.31,
+   "motion": 0.06,
+   "CDs": 0.48,
+   "CDm": 0.71,
+   "CDw": 0.65
+  },
+  "REArtGS++ (paper, no depth)": {
+   "ang": 0.005,
+   "pos": 0.73,
+   "motion": 0.02,
+   "CDs": 0.53,
+   "CDm": 0.6,
+   "CDw": 0.48
+  }
+ },
+ "paris/sapien/oven_101917": {
+  "ArtGS (paper, depth)": {
+   "ang": 0.01,
+   "pos": 0.0,
+   "motion": 0.02,
+   "CDs": 3.88,
+   "CDm": 0.89,
+   "CDw": 3.58
+  },
+  "ArtGS (REArtGS++ tab, no depth)": {
+   "ang": 0.02,
+   "pos": 1.35,
+   "motion": 0.01,
+   "CDs": 8.58,
+   "CDm": 2.52,
+   "CDw": 8.32
+  },
+  "REArtGS (REArtGS++ tab, no depth)": {
+   "ang": 0.07,
+   "pos": 3.64,
+   "motion": 0.08,
+   "CDs": 6.59,
+   "CDm": 1.25,
+   "CDw": 10.89
+  },
+  "REArtGS++ (paper, no depth)": {
+   "ang": 0.005,
+   "pos": 0.71,
+   "motion": 0.005,
+   "CDs": 4.14,
+   "CDm": 0.85,
+   "CDw": 3.72
+  }
+ },
+ "paris/sapien/scissor_11100": {
+  "ArtGS (paper, depth)": {
+   "ang": 0.05,
+   "pos": 0.0,
+   "motion": 0.04,
+   "CDs": 0.61,
+   "CDm": 0.64,
+   "CDw": 0.67
+  },
+  "ArtGS (REArtGS++ tab, no depth)": {
+   "ang": 0.005,
+   "pos": 0.18,
+   "motion": 0.01,
+   "CDs": 0.5,
+   "CDm": 0.7,
+   "CDw": 0.72
+  },
+  "REArtGS (REArtGS++ tab, no depth)": {
+   "ang": 0.05,
+   "pos": 0.06,
+   "motion": 0.06,
+   "CDs": 0.25,
+   "CDm": 0.25,
+   "CDw": 0.31
+  },
+  "REArtGS++ (paper, no depth)": {
+   "ang": 0.04,
+   "pos": 0.005,
+   "motion": 0.03,
+   "CDs": 0.37,
+   "CDm": 0.83,
+   "CDw": 0.56
+  }
+ },
+ "paris/sapien/stapler_103111": {
+  "ArtGS (paper, depth)": {
+   "ang": 0.01,
+   "pos": 0.01,
+   "motion": 0.01,
+   "CDs": 3.83,
+   "CDm": 0.52,
+   "CDw": 2.63
+  },
+  "ArtGS (REArtGS++ tab, no depth)": {
+   "ang": 0.01,
+   "pos": 0.38,
+   "motion": 0.03,
+   "CDs": 3.55,
+   "CDm": 0.86,
+   "CDw": 2.71
+  },
+  "REArtGS (REArtGS++ tab, no depth)": {
+   "ang": 0.06,
+   "pos": 0.72,
+   "motion": 0.15,
+   "CDs": 1.47,
+   "CDm": 0.21,
+   "CDw": 3.26
+  },
+  "REArtGS++ (paper, no depth)": {
+   "ang": 0.005,
+   "pos": 0.49,
+   "motion": 0.01,
+   "CDs": 3.6,
+   "CDm": 0.9,
+   "CDw": 2.87
+  }
+ },
+ "paris/sapien/USB_100109": {
+  "ArtGS (paper, depth)": {
+   "ang": 0.04,
+   "pos": 0.0,
+   "motion": 0.03,
+   "CDs": 2.25,
+   "CDm": 1.22,
+   "CDw": 1.28
+  },
+  "ArtGS (REArtGS++ tab, no depth)": {
+   "ang": 0.02,
+   "pos": 0.15,
+   "motion": 0.005,
+   "CDs": 2.51,
+   "CDm": 1.15,
+   "CDw": 1.57
+  },
+  "REArtGS (REArtGS++ tab, no depth)": {
+   "ang": 0.04,
+   "pos": 1.56,
+   "motion": 0.05,
+   "CDs": 0.82,
+   "CDm": 0.4,
+   "CDw": 1.54
+  },
+  "REArtGS++ (paper, no depth)": {
+   "ang": 0.04,
+   "pos": 0.04,
+   "motion": 0.03,
+   "CDs": 3.12,
+   "CDm": 1.15,
+   "CDw": 1.3
+  }
+ },
+ "paris/sapien/washer_103776": {
+  "ArtGS (paper, depth)": {
+   "ang": 0.02,
+   "pos": 0.0,
+   "motion": 0.03,
+   "CDs": 6.43,
+   "CDm": 0.45,
+   "CDw": 5.99
+  },
+  "ArtGS (REArtGS++ tab, no depth)": {
+   "ang": 0.04,
+   "pos": 1.06,
+   "motion": 0.02,
+   "CDs": 23.63,
+   "CDm": 4.67,
+   "CDw": 21.69
+  },
+  "REArtGS (REArtGS++ tab, no depth)": {
+   "ang": 0.08,
+   "pos": 0.04,
+   "motion": 0.04,
+   "CDs": 16.04,
+   "CDm": 0.42,
+   "CDw": 17.82
+  },
+  "REArtGS++ (paper, no depth)": {
+   "ang": 0.02,
+   "pos": 0.95,
+   "motion": 0.01,
+   "CDs": 10.59,
+   "CDm": 0.89,
+   "CDw": 13.97
+  }
+ },
+ "paris/sapien/blade_103706": {
+  "ArtGS (paper, depth)": {
+   "ang": 0.03,
+   "pos": null,
+   "motion": 0.0,
+   "CDs": 0.54,
+   "CDm": 1.12,
+   "CDw": 0.61
+  },
+  "ArtGS (REArtGS++ tab, no depth)": {
+   "ang": 0.02,
+   "pos": null,
+   "motion": 0.005,
+   "CDs": 0.51,
+   "CDm": 1.23,
+   "CDw": 0.67
+  },
+  "REArtGS (REArtGS++ tab, no depth)": {
+   "ang": 0.04,
+   "pos": null,
+   "motion": 0.005,
+   "CDs": 0.69,
+   "CDm": 1.97,
+   "CDw": 0.4
+  },
+  "REArtGS++ (paper, no depth)": {
+   "ang": 0.01,
+   "pos": null,
+   "motion": 0.005,
+   "CDs": 0.39,
+   "CDm": 2.54,
+   "CDw": 0.5
+  }
+ },
+ "paris/sapien/storage_45135": {
+  "ArtGS (paper, depth)": {
+   "ang": 0.01,
+   "pos": null,
+   "motion": 0.0,
+   "CDs": 7.31,
+   "CDm": 1.02,
+   "CDw": 5.21
+  },
+  "ArtGS (REArtGS++ tab, no depth)": {
+   "ang": 0.01,
+   "pos": null,
+   "motion": 0.01,
+   "CDs": 11.82,
+   "CDm": 6.56,
+   "CDw": 8.69
+  },
+  "REArtGS (REArtGS++ tab, no depth)": {
+   "ang": 0.04,
+   "pos": null,
+   "motion": 0.08,
+   "CDs": 7.47,
+   "CDm": 12.39,
+   "CDw": 7.71
+  },
+  "REArtGS++ (paper, no depth)": {
+   "ang": 0.005,
+   "pos": null,
+   "motion": 0.005,
+   "CDs": 10.41,
+   "CDm": 4.78,
+   "CDw": 7.39
+  }
+ },
+ "paris/realscan/real_fridge": {
+  "ArtGS (paper, depth)": {
+   "ang": 2.09,
+   "pos": 0.47,
+   "motion": 1.94,
+   "CDs": 1.64,
+   "CDm": 0.66,
+   "CDw": 1.29
+  },
+  "ArtGS (REArtGS++ tab, no depth)": {
+   "ang": 2.03,
+   "pos": 42.83,
+   "motion": 2.27,
+   "CDs": 3.39,
+   "CDm": 3.23,
+   "CDw": 3.26
+  },
+  "REArtGS (REArtGS++ tab, no depth)": {
+   "ang": 2.19,
+   "pos": 45.72,
+   "motion": 38.38,
+   "CDs": 7.67,
+   "CDm": 2.87,
+   "CDw": 2.93
+  },
+  "REArtGS++ (paper, no depth)": {
+   "ang": 1.92,
+   "pos": 42.66,
+   "motion": 2.16,
+   "CDs": 1.33,
+   "CDm": 1.75,
+   "CDw": 1.52
+  }
+ },
+ "paris/realscan/real_storage": {
+  "ArtGS (paper, depth)": {
+   "ang": 3.47,
+   "pos": null,
+   "motion": 0.04,
+   "CDs": 2.93,
+   "CDm": 6.28,
+   "CDw": 3.23
+  },
+  "ArtGS (REArtGS++ tab, no depth)": {
+   "ang": 4.56,
+   "pos": null,
+   "motion": 0.15,
+   "CDs": 18.19,
+   "CDm": 33.65,
+   "CDw": 12.26
+  },
+  "REArtGS (REArtGS++ tab, no depth)": {
+   "ang": 87.51,
+   "pos": null,
+   "motion": 0.52,
+   "CDs": 22.53,
+   "CDm": 175.78,
+   "CDw": 11.48
+  },
+  "REArtGS++ (paper, no depth)": {
+   "ang": 3.34,
+   "pos": null,
+   "motion": 0.13,
+   "CDs": 10.98,
+   "CDm": 13.85,
+   "CDw": 10.63
+  }
+ },
+ "artgs/sapien/table_25493": {
+  "ArtGS (paper, depth)": {
+   "ang": 1.16,
+   "pos": null,
+   "motion": 0.0,
+   "CDs": 0.74,
+   "CDm": 3.53,
+   "CDw": 0.74
+  },
+  "ArtGS (REArtGS++ tab, no depth)": {
+   "ang": 1.23,
+   "pos": null,
+   "motion": 0.08,
+   "CDs": 85.65,
+   "CDm": 216.58,
+   "CDw": 1.06
+  },
+  "REArtGS (REArtGS++ tab, no depth)": {
+   "ang": 85.45,
+   "pos": null,
+   "motion": 0.23,
+   "CDs": 45.11,
+   "CDm": 71.44,
+   "CDw": 3.52
+  },
+  "REArtGS++ (paper, no depth)": {
+   "ang": 0.02,
+   "pos": null,
+   "motion": 0.67,
+   "CDs": 0.77,
+   "CDm": 1.39,
+   "CDw": 0.72
+  }
+ },
+ "artgs/sapien/table_31249": {
+  "ArtGS (paper, depth)": {
+   "ang": 0.04,
+   "pos": 0.0,
+   "motion": 0.01,
+   "CDs": 1.22,
+   "CDm": 3.09,
+   "CDw": 1.16
+  },
+  "ArtGS (REArtGS++ tab, no depth)": {
+   "ang": 83.69,
+   "pos": 70.93,
+   "motion": 22.5,
+   "CDs": 3.01,
+   "CDm": 9.5,
+   "CDw": 4.06
+  },
+  "REArtGS (REArtGS++ tab, no depth)": {
+   "ang": 42.18,
+   "pos": 155.8,
+   "motion": 13.09,
+   "CDs": 2.86,
+   "CDm": 10.63,
+   "CDw": 2.88
+  },
+  "REArtGS++ (paper, no depth)": {
+   "ang": 0.05,
+   "pos": 0.1,
+   "motion": 0.09,
+   "CDs": 1.26,
+   "CDm": 4.89,
+   "CDw": 1.13
+  }
+ },
+ "artgs/sapien/storage_45503": {
+  "ArtGS (paper, depth)": {
+   "ang": 0.02,
+   "pos": 0.0,
+   "motion": 0.03,
+   "CDs": 0.75,
+   "CDm": 0.13,
+   "CDw": 0.88
+  },
+  "ArtGS (REArtGS++ tab, no depth)": {
+   "ang": 0.01,
+   "pos": 0.36,
+   "motion": 0.01,
+   "CDs": 2.35,
+   "CDm": 0.39,
+   "CDw": 2.29
+  },
+  "REArtGS (REArtGS++ tab, no depth)": {
+   "ang": 64.34,
+   "pos": 500.51,
+   "motion": 46.09,
+   "CDs": 14.12,
+   "CDm": 119.32,
+   "CDw": 13.16
+  },
+  "REArtGS++ (paper, no depth)": {
+   "ang": 0.06,
+   "pos": 0.21,
+   "motion": 0.08,
+   "CDs": 1.35,
+   "CDm": 0.58,
+   "CDw": 3.76
+  }
+ },
+ "artgs/sapien/storage_47648": {
+  "ArtGS (paper, depth)": {
+   "ang": 0.14,
+   "pos": 0.02,
+   "motion": 0.62,
+   "CDs": 0.67,
+   "CDm": 3.7,
+   "CDw": 0.7
+  },
+  "ArtGS (REArtGS++ tab, no depth)": {
+   "ang": 34.83,
+   "pos": 235.19,
+   "motion": 18.75,
+   "CDs": 1.74,
+   "CDm": 7.49,
+   "CDw": 3.31
+  },
+  "REArtGS (REArtGS++ tab, no depth)": {
+   "ang": 30.69,
+   "pos": 31.44,
+   "motion": 25.41,
+   "CDs": 2.16,
+   "CDm": 70.91,
+   "CDw": 6.16
+  },
+  "REArtGS++ (paper, no depth)": {
+   "ang": 2.58,
+   "pos": 0.06,
+   "motion": 0.05,
+   "CDs": 0.61,
+   "CDm": 3.19,
+   "CDw": 2.13
+  }
+ },
+ "artgs/sapien/oven_101908": {
+  "ArtGS (paper, depth)": {
+   "ang": 0.04,
+   "pos": 0.01,
+   "motion": 0.23,
+   "CDs": 1.08,
+   "CDm": 0.25,
+   "CDw": 1.03
+  },
+  "ArtGS (REArtGS++ tab, no depth)": {
+   "ang": 5.62,
+   "pos": 8.54,
+   "motion": 5.73,
+   "CDs": 10.45,
+   "CDm": 0.79,
+   "CDw": 9.87
+  },
+  "REArtGS (REArtGS++ tab, no depth)": {
+   "ang": 24.5,
+   "pos": 233.48,
+   "motion": 55.53,
+   "CDs": 15.83,
+   "CDm": 136.68,
+   "CDw": 17.96
+  },
+  "REArtGS++ (paper, no depth)": {
+   "ang": 0.03,
+   "pos": 1.62,
+   "motion": 0.21,
+   "CDs": 5.03,
+   "CDm": 0.8,
+   "CDw": 5.14
+  }
+ },
+ "dta/sapien/storage_47254": {
+  "ArtGS (paper, depth)": {
+   "ang": 0.015,
+   "pos": 0.01,
+   "motion": 0.005,
+   "CDs": 0.78,
+   "CDm": 0.23,
+   "CDw": 0.93
+  }
+ },
+ "dta/sapien/fridge_10489": {
+  "ArtGS (paper, depth)": {
+   "ang": 0.01,
+   "pos": 0.0,
+   "motion": 0.025,
+   "CDs": 0.62,
+   "CDm": 0.125,
+   "CDw": 0.75
+  }
+ }
+}

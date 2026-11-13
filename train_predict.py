@@ -23,10 +23,12 @@ from argparse import ArgumentParser
 from arguments import ModelParams, PipelineParams, OptimizationParams
 from pytorch_lightning import seed_everything
 from utils.metrics import *
+from semart.args import SemParams, apply_slot_overrides
 
 
 class Trainer:
-    def __init__(self, args, dataset, opt, pipe) -> None:
+    def __init__(self, args, dataset, opt, pipe, center_file=None) -> None:
+        self.center_file = center_file
         self.dataset = dataset
         self.args = args
         self.opt = opt
@@ -59,7 +61,10 @@ class Trainer:
         self.viewpoint_stacks = [self.scene.getTrainCameras_start(), self.scene.getTrainCameras_end()]
     
     def init_deform(self,):
-        if self.args.center_init == 'cgs':
+        if self.center_file is not None:
+            self.deform.deform.seg_model.init_from_file(self.center_file)
+            print(f'Init center from {self.center_file}.')
+        elif self.args.center_init == 'cgs':
             p = args.source_path.replace('data/', 'outputs/')
             coarse_name = self.args.coarse_name
             self.deform.deform.seg_model.init_from_file(f'{p}/{coarse_name}/point_cloud/iteration_10000/center_info.npy')
@@ -133,9 +138,18 @@ class Trainer:
             if self.iteration == self.opt.iterations:
                 self.progress_bar.close()
                 joint_types = self.deform.deform.cal_art_type()
-                joint_types_dict = json.load(open(f'./arguments/joint_types_{self.args.center_init}.json'))
-                joint_types_dict[self.args.dataset][self.args.subset][self.args.scene_name] = joint_types
-                json.dump(joint_types_dict, open(f'./arguments/joint_types_{self.args.center_init}.json', 'w'), indent=4)
+                if self.args.joint_types_out:
+                    os.makedirs(os.path.dirname(os.path.abspath(self.args.joint_types_out)), exist_ok=True)
+                    with open(self.args.joint_types_out, 'w') as f:
+                        f.write(joint_types + '\n')
+                    print(f'Wrote joint types {joint_types} -> {self.args.joint_types_out}')
+                    json.dump({'types': joint_types, 'angles_deg': self.deform.deform.pred_angles},
+                              open(self.args.joint_types_out + '.json', 'w'))
+                    joint_types = None
+                if joint_types is not None:
+                    joint_types_dict = json.load(open(f'./arguments/joint_types_{self.args.center_init}.json'))
+                    joint_types_dict[self.args.dataset][self.args.subset][self.args.scene_name] = joint_types
+                    json.dump(joint_types_dict, open(f'./arguments/joint_types_{self.args.center_init}.json', 'w'), indent=4)
             
             # Optimizer step
             if self.iteration < self.opt.iterations:
@@ -155,6 +169,7 @@ if __name__ == "__main__":
     lp = ModelParams(parser)
     op = OptimizationParams(parser)
     pp = PipelineParams(parser)
+    sp = SemParams(parser)
     
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--deform-type", type=str, default='mlp')
@@ -168,6 +183,8 @@ if __name__ == "__main__":
     seed_everything(args.seed)
 
     args.num_slots = json.load(open('./arguments/num_slots.json', 'r'))[args.dataset][args.subset][args.scene_name]
-    trainer = Trainer(args=args, dataset=lp.extract(args), opt=op.extract(args), pipe=pp.extract(args))
+    center_file = apply_slot_overrides(args)
+    print(f"num_slots={args.num_slots}")
+    trainer = Trainer(args=args, dataset=lp.extract(args), opt=op.extract(args), pipe=pp.extract(args), center_file=center_file)
     trainer.train(args.iterations)
     print("\nTraining complete.")

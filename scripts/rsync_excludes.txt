@@ -20,3 +20,8 @@ dist/
 *.zip
 *.tar
 .env
+# symlinks in git worktrees (patterns above with a trailing / only match real dirs)
+/data
+/runs
+/outputs
+/cache

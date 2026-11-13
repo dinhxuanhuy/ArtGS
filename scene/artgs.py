@@ -101,6 +101,7 @@ class ArtGS(nn.Module):
         theta = theta.rad2deg()
         self.joint_types = ['s']
         self.joint_types += ['r' if t.item() > 10 else 'p' for t in theta]
+        self.pred_angles = [float(t.item()) for t in theta]  # semart: used to fuse with VLM types
         self.use_art_type_prior = True
         print(self.joint_types)
         return ','.join(self.joint_types)
@@ -216,6 +217,7 @@ class ArtGS(nn.Module):
             'd_rotation': d_rotation,
             'xt': xt,
             'mask': mask.argmax(-1),
+            'mask_soft': mask,  # [N, K] (straight-through one-hot once tau is annealed); used by semart
         }
         
     def forward(self, gaussians: GaussianModel, is_training=False):

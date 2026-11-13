@@ -1,0 +1,7 @@
+{
+  "_comment": "ArtGS and SemArt on the same scene with one shared coarse model, for paired comparisons.",
+  "methods": "artgs,sem_v2_mask",
+  "iters": 20000,
+  "res": 2,
+  "seed": 0
+}

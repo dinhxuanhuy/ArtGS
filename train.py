@@ -26,11 +26,14 @@ from pytorch_lightning import seed_everything
 from utils.metrics import *
 from pytorch3d.loss import chamfer_distance
 from utils.depth_loss import DepthLoss
+from semart.args import SemParams, apply_slot_overrides
 
 
 class Trainer:
-    def __init__(self, args, dataset, opt, pipe, saving_iterations):
+    def __init__(self, args, dataset, opt, pipe, saving_iterations, sem=None, center_file=None):
         self.dataset = dataset
+        self.sem = sem
+        self.center_file = center_file
         self.args = args
         self.opt = opt
         self.pipe = pipe
@@ -76,9 +79,17 @@ class Trainer:
         self.mono_depth_loss_weight = args.mono_depth_loss_weight
 
         self.depth_loss = DepthLoss()
+
+        self.sem_sup = None
+        if sem is not None and sem.lambda_sem > 0:
+            from semart.mask_loss import SemMaskSupervisor
+            self.sem_sup = SemMaskSupervisor(sem.sem_mask_dir, self.viewpoint_stacks, sem, self.deform.deform.num_slots)
     
     def init_deform(self,):
-        if self.args.center_init == 'cgs':
+        if self.center_file is not None:
+            self.deform.deform.seg_model.init_from_file(self.center_file)
+            print(f'Init center from {self.center_file}.')
+        elif self.args.center_init == 'cgs':
             p = args.source_path.replace('data/', 'outputs/')
             coarse_name = self.args.coarse_name
             center, scale = self.deform.deform.seg_model.init_from_file(f'{p}/{coarse_name}/point_cloud/iteration_10000/center_info.npy')
@@ -163,6 +174,15 @@ class Trainer:
 
         if self.iteration > 3000:
             loss = loss + self.deform.reg_loss
+
+        sp = self.sem
+        if (self.sem_sup is not None and sp.sem_from_iter <= self.iteration < sp.sem_until_iter
+                and self.iteration % sp.sem_every == 0 and self.sem_sup.has(state, viewpoint_cam)):
+            sem_loss, sem_stats = self.sem_sup.loss(viewpoint_cam, state, self.gaussians, d_xyz, d_rot, d_values['mask_soft'])
+            loss = loss + sp.lambda_sem * sem_loss
+            if self.iteration % 100 == 0 and sem_stats:
+                for k, v in sem_stats.items():
+                    self.tb_writer.add_scalar(f'train/sem_{k}', v, self.iteration)
         
         loss.backward()
         self.iter_end.record()
@@ -187,7 +207,7 @@ class Trainer:
             # # Log and save
             training_report(self.tb_writer, self.iteration, Ll1, depth_loss, mono_depth_loss, loss, 
                             self.iter_start.elapsed_time(self.iter_end), self.scene, self.joint_metrics)
-            if self.iteration % 100 == 0 and self.iteration > 15000:
+            if self.iteration % 100 == 0 and self.iteration > 15000 and not (self.sem is not None and self.sem.no_gt_select):
                 cur_joint_error = sum([sum(m) for m in self.joint_metrics]) if len(self.joint_metrics) > 0 else 1e5
                 if cur_joint_error < self.best_joint_error or (self.iteration == self.args.iterations and self.best_iteration <= 15000):
                     self.best_iteration = self.iteration
@@ -197,7 +217,7 @@ class Trainer:
                 print("\n[ITER {}] Saving Gaussians".format(self.iteration))
                 self.scene.save(self.iteration)
                 self.deform.save_weights(self.args.model_path, self.iteration)
-            if self.iteration == self.best_iteration:
+            if self.iteration == self.best_iteration and not (self.sem is not None and self.sem.no_gt_select):
                 print("\n[ITER {}] Saving Gaussians".format(self.iteration))
                 self.scene.save(self.iteration, is_best=True)
                 self.deform.save_weights(self.args.model_path, self.iteration, is_best=True)
@@ -244,6 +264,7 @@ if __name__ == "__main__":
     lp = ModelParams(parser)
     op = OptimizationParams(parser)
     pp = PipelineParams(parser)
+    sp = SemParams(parser)
     
     parser.add_argument('--detect_anomaly', action='store_true', default=False)
     parser.add_argument("--save_iterations", nargs="+", type=int, default=[5000, 20_000, 40_000, 60_000, 80_000])
@@ -261,6 +282,9 @@ if __name__ == "__main__":
 
     args.joint_types = json.load(open(f'./arguments/joint_types_{args.center_init}.json', 'r'))[args.dataset][args.subset][args.scene_name]
     args.num_slots = len(args.joint_types.split(','))
-    trainer = Trainer(args=args, dataset=lp.extract(args), opt=op.extract(args), pipe=pp.extract(args), saving_iterations=args.save_iterations)
+    center_file = apply_slot_overrides(args)
+    print(f"num_slots={args.num_slots} joint_types={args.joint_types}")
+    trainer = Trainer(args=args, dataset=lp.extract(args), opt=op.extract(args), pipe=pp.extract(args), saving_iterations=args.save_iterations,
+                      sem=sp.extract(args), center_file=center_file)
     trainer.train(args.iterations)
     print("\nTraining complete.")

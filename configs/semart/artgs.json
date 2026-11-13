@@ -1,0 +1,7 @@
+{
+  "_comment": "Original ArtGS: K from arguments/num_slots.json (GT), spectral-clustering centres, joint types from train_predict.py. No VLM/SAM needed.",
+  "methods": "artgs",
+  "iters": 20000,
+  "res": 2,
+  "seed": 0
+}

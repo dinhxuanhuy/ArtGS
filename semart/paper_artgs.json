@@ -1,0 +1,15 @@
+{
+  "_source": "ArtGS (ICLR 2025, arXiv 2502.19459) Table 2 (DTA-Multi, mean of 10 seeds) and Table 3 (ArtGS-Multi, mean of 3 trials, metrics averaged over movable parts). Protocol in the paper/code: resolution 1, checkpoint selected by GT joint error ('best'), depth supervision on. Axis Pos x10, CD x1000 as in render.py. Table 3 prints 'Storage 47468', which is storage_47648.",
+  "dta/sapien/storage_47254": {"per_part": [
+      {"type": "r", "angle": 0.01, "distance": 0.01, "theta_diff": 0.01, "CD_dynamic": 0.19},
+      {"type": "p", "angle": 0.02, "distance": null, "theta_diff": 0.00, "CD_dynamic": 0.27}],
+    "CD_static": 0.78, "CD_whole": 0.93},
+  "dta/sapien/fridge_10489": {"per_part": [
+      {"type": "r", "angle": 0.02, "distance": 0.00, "theta_diff": 0.02, "CD_dynamic": 0.07},
+      {"type": "r", "angle": 0.00, "distance": 0.00, "theta_diff": 0.03, "CD_dynamic": 0.18}],
+    "CD_static": 0.62, "CD_whole": 0.75},
+  "artgs/sapien/storage_45503": {"mean": {"angle": 0.02, "distance": 0.00, "theta_diff": 0.03, "CD_dynamic": 0.13},
+    "CD_static": 0.75, "CD_whole": 0.88},
+  "artgs/sapien/storage_47648": {"mean": {"angle": 0.14, "distance": 0.02, "theta_diff": 0.62, "CD_dynamic": 3.70},
+    "CD_static": 0.67, "CD_whole": 0.70}
+}
