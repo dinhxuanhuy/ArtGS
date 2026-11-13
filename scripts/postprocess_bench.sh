@@ -4,8 +4,8 @@
 #   bash scripts/postprocess_bench.sh runs/<RUN_ID> [method]
 set -uo pipefail
 cd "$(dirname "$0")/.."
-RUN=$1; M=${2:-sem_v2_mask}; ID=$(basename "$RUN")
-FIGS=$HOME/ArtGS/research/semart/figs_bench; mkdir -p "$FIGS"
+RUN=$1; M=${2:-semart}; GLOB=${3:-_semart_v3_}; ID=$(basename "$RUN")
+FIGS=$HOME/ArtGS/research/semart/figs_${M}; mkdir -p "$FIGS"
 PY="$HOME/ArtGS/envs/artgs/bin/python"; export PYTHONNOUSERSITE=1
 for d in $(cd "$RUN" && ls -d */*/*/${M}_s0 2>/dev/null); do
   sc=$(dirname "$d")
@@ -13,5 +13,5 @@ for d in $(cd "$RUN" && ls -d */*/*/${M}_s0 2>/dev/null); do
   "$PY" -m semart.vis_parts --run_dir "$RUN" --scene "$sc" --methods "$M" --views 0000,0030 \
     --out "$FIGS/${sc//\//_}.jpg" 2>&1 | grep -E "figure ->|Error" | tail -1
 done
-python3 semart/report_bench.py $HOME/ArtGS/runs/*_semart_bench_* --method "$M" \
-  --out $HOME/ArtGS/research/semart/REPORT_BENCH.md --figs "$FIGS" > /dev/null && echo "report -> research/semart/REPORT_BENCH.md"
+python3 semart/report_bench.py $HOME/ArtGS/runs/*${GLOB}* --method "$M" \
+  --out $HOME/ArtGS/research/semart/REPORT_${M}.md --figs "$FIGS" > /dev/null && echo "report -> research/semart/REPORT_BENCH.md"
