@@ -53,11 +53,23 @@ def project(cam, X, W, H):
 
 
 def state_points(coarse_pc):
-    """All coarse points per state and their squared displacement to the other state."""
+    """All coarse points per state, squared displacement and displacement vector to the nearest
+    point of the other state (a crude per-point motion estimate)."""
     P = [np.concatenate([np.load(f"{coarse_pc}/xyz_static_{s}.npy"), np.load(f"{coarse_pc}/xyz_dynamic_{s}.npy")])
          for s in (0, 1)]
-    d2 = [cKDTree(P[1 - s]).query(P[s])[0] ** 2 for s in (0, 1)]   # like pytorch3d chamfer
-    return P, d2
+    d2, V = [], []
+    for s in (0, 1):
+        d, nn = cKDTree(P[1 - s]).query(P[s])
+        d2.append(d ** 2)                                            # like pytorch3d chamfer
+        V.append(P[1 - s][nn] - P[s])
+    return P, d2, V
+
+
+def same_motion(u, v, cos_min=0.9, ratio=1.67):
+    nu, nv = np.linalg.norm(u), np.linalg.norm(v)
+    if nu < 1e-9 or nv < 1e-9:
+        return False
+    return float(u @ v) / (nu * nv) > cos_min and max(nu, nv) / min(nu, nv) < ratio
 
 
 def moving_mask(P, d2, ratio, rule):
@@ -143,6 +155,10 @@ def main():
     ap.add_argument("--inst_min_moving_frac", type=float, default=0.4,
                     help="2D filter: keep an instance if this fraction of its visible points move")
     ap.add_argument("--no_merge", action="store_true", help="do not fuse instances of count-1 categories")
+    ap.add_argument("--min_cover", type=float, default=0.3,
+                    help="v3: below this fraction of mask-covered moving points, cluster by motion only")
+    ap.add_argument("--merge_ratio", type=float, default=0.5,
+                    help="v3: merge two clusters if their cross mask-affinity >= this x their own (0 = off)")
     ap.add_argument("--seed", type=int, default=0)
     a = ap.parse_args()
     if a.dyn_ratio is None:
@@ -156,7 +172,7 @@ def main():
     n_vlm = {p["name"]: int(p.get("count", 1)) for p in parts}
     merge = set() if a.no_merge else {c for c, n in n_vlm.items() if n == 1}
 
-    P, d2 = state_points(pc)
+    P, d2, V = state_points(pc)
     s = 0 if d2[0].mean() > d2[1].mean() else 1               # same rule as match_gaussians
     moving = [moving_mask(P[t], d2[t], a.dyn_ratio, a.dyn_rule) for t in (0, 1)]
     tol = 0.01 * np.linalg.norm(P[s].max(0) - P[s].min(0))
@@ -178,17 +194,21 @@ def main():
             # false positive on the base drag a true instance of the same category down with it)
             lab, cats = load_labels(p, img_wh, set())
             vis, loc = visible_labels(cam, lab, P[t], len(P[t]), img_wh, tol)
-            new_lab, new_cats, first = np.zeros_like(lab), [], {}
+            new_lab, new_cats, groups = np.zeros_like(lab), [], {}   # groups: cat -> [(id, mean motion)]
             for k, c in enumerate(cats, 1):
                 inside = vis & (loc == k)
                 n_mov, n_all = int((inside & moving[t]).sum()), int(inside.sum())
                 if n_all >= 5 and n_mov >= a.inst_min_moving_frac * n_all:
-                    if c in merge and c in first:
-                        new_lab[lab == k] = first[c]
+                    mv = V[t][inside & moving[t]].mean(0)
+                    # v3: fuse with an earlier instance of a count-1 category only if both MOVE alike
+                    # (drawer front + box: yes; two oven doors on different hinges: no)
+                    tgt = next((g for g, m in groups.get(c, []) if same_motion(mv, m)), None) if c in merge else None
+                    if tgt is not None:
+                        new_lab[lab == k] = tgt
                     else:
                         new_cats.append(c)
                         new_lab[lab == k] = len(new_cats)
-                        first[c] = len(new_cats)
+                        groups.setdefault(c, []).append((len(new_cats), mv))
                     kept[c] += 1
                 else:
                     dropped[c] += 1
@@ -218,17 +238,29 @@ def main():
     covered = (ids > 0).sum(1) >= a.min_views
 
     n_sam = {c: int(round(np.percentile(v, 90))) if v else 0 for c, v in sam_counts.items()}
-    k_req = {"vlm": sum(n_vlm.values()), "vlm_motion": sum(n_vlm.values()), "sam": sum(n_sam.values()),
+    # v3: where SAM3 keeps seeing >= 2 differently-moving instances of a category the VLM counted once,
+    # trust that count (oven_101908: "1 oven door" for two doors)
+    n_eff = {c: max(n_vlm[c], n_sam.get(c, 0)) if n_vlm[c] == 1 else n_vlm[c] for c in n_vlm}
+    k_req = {"vlm": sum(n_vlm.values()), "vlm_motion": sum(n_eff.values()), "sam": sum(n_sam.values()),
              "gt": (a.gt_k or 0) - 1, "eigengap": None}[a.k_source]
     report = {"larger_motion_state": s, "n_moving": int(len(dyn)), "n_sampled": int(len(D)),
               "n_views_with_masks": int(ids.shape[1]), "covered_frac": float(covered.mean()) if len(D) else 0.0,
-              "n_vlm": n_vlm, "n_sam_filtered": n_sam, "merged_categories": sorted(merge),
+              "n_vlm": n_vlm, "n_sam_filtered": n_sam, "n_effective": n_eff, "merged_categories": sorted(merge),
               "inst_kept": dict(kept), "inst_dropped": dict(dropped)}
     Dc, idc = D[covered], ids[covered]
-    if len(Dc) < 10:
-        json.dump(report, open(os.path.join(a.out_dir, "lift_report.json"), "w"), indent=2)
-        raise SystemExit(f"[lift] too few labelled moving points ({len(Dc)}); see lift_report.json")
-    W = affinity(idc, max(len(inst_cat), 1), a.min_views)
+    fallback = len(Dc) < max(10, a.min_cover * len(D))
+    report["fallback_motion_only"] = bool(fallback)
+    if fallback:
+        # v3: masks are silent (segmenter missed the part): cluster moving points by position, as ArtGS
+        if len(D) < 10:
+            json.dump(report, open(os.path.join(a.out_dir, "lift_report.json"), "w"), indent=2)
+            raise SystemExit(f"[lift] only {len(D)} moving points")
+        print(f"[lift] masks cover {len(Dc)}/{len(D)} moving points -> motion-only fallback")
+        Dc, idc = D, np.zeros((len(D), 0), np.int64)
+        Wsem = np.eye(len(Dc))
+    else:
+        Wsem = affinity(idc, max(len(inst_cat), 1), a.min_views)
+    W = Wsem.copy()
     # weak spatial term keeps the graph connected where masks are silent
     dist, nn = cKDTree(Dc).query(Dc, k=min(9, len(Dc)))
     sigma = np.median(dist[:, -1]) + 1e-9
@@ -237,19 +269,19 @@ def main():
         W[r, nn[:, j]] = np.maximum(W[r, nn[:, j]], 0.05 * np.exp(-(dist[:, j] / sigma) ** 2))
     W = np.maximum(W, W.T)
     k_eig, ev = eigengap_k(W)
-    k = k_eig if a.k_source == "eigengap" else k_req
+    k = k_eig if (a.k_source == "eigengap" or fallback) else k_req
     from sklearn.cluster import SpectralClustering
-    if a.k_source == "vlm_motion" and k_eig != k_req and k_eig >= 1:
+    if a.k_source == "vlm_motion" and not fallback and k_eig != k_req and k_eig >= 1:
         # VLM count vs motion/mask eigengap disagree: keep the K whose partition is more consistent
         from sklearn.metrics import silhouette_score
-        D = 1.0 - W / W.max()
-        np.fill_diagonal(D, 0.0)
+        Dist = 1.0 - W / W.max()
+        np.fill_diagonal(Dist, 0.0)
         sil = {}
         for kk in sorted({k_req, k_eig}):
             if kk > 1:
                 l = SpectralClustering(kk, affinity="precomputed", assign_labels="discretize",
                                        random_state=a.seed).fit_predict(W)
-                sil[kk] = float(silhouette_score(D, l, metric="precomputed"))
+                sil[kk] = float(silhouette_score(Dist, l, metric="precomputed"))
         if sil:
             k = max(sil, key=sil.get)
         report["k_silhouette"] = sil
@@ -260,6 +292,27 @@ def main():
 
     lab = (SpectralClustering(k, affinity="precomputed", assign_labels="discretize", random_state=a.seed)
            .fit_predict(W) if k > 1 else np.zeros(len(Dc), int))
+    if not fallback and a.merge_ratio > 0:
+        # v3: two clusters whose points keep falling into the SAME masks are one part split in two
+        # (VLM over-count: "2 handles" of a scissor, "backrest + seat"); merge them, K may drop to 1
+        merged = []
+        while len(np.unique(lab)) > 1:
+            cs = list(np.unique(lab))
+            m = {c: lab == c for c in cs}
+            within = {c: Wsem[np.ix_(m[c], m[c])].mean() for c in cs}
+            best, pair = 0.0, None
+            for i, ca in enumerate(cs):
+                for cb in cs[i + 1:]:
+                    r_ = Wsem[np.ix_(m[ca], m[cb])].mean() / max(min(within[ca], within[cb]), 1e-9)
+                    if r_ > best:
+                        best, pair = r_, (ca, cb)
+            if best < a.merge_ratio:
+                break
+            lab[lab == pair[1]] = pair[0]
+            merged.append([int(pair[0]), int(pair[1]), round(float(best), 3)])
+        lab = np.unique(lab, return_inverse=True)[1]
+        k = int(lab.max()) + 1
+        report["merged_clusters"] = merged
     frac = np.bincount(lab, minlength=k) / len(lab)
     keep = [c for c in range(k) if frac[c] >= a.min_part_frac]      # 3D motion verification
     report.update(cluster_frac=frac.tolist(), dropped_clusters=[c for c in range(k) if c not in keep])
@@ -275,7 +328,9 @@ def main():
         votes = Counter(inst_cat[g - 1] for g in idk[lab_k == i].ravel() if g > 0)
         cat = votes.most_common(1)[0][0] if votes else "unknown"
         cats_out.append({"category": cat, "votes": dict(votes), "n_points": int((lab_k == i).sum())})
-        jt.append(joint_of.get(cat, "r"))
+        # unlabelled cluster (fallback): use the VLM's joint type if it named a single kind of part
+        default = next(iter(joint_of.values())) if len(joint_of) == 1 else "r"
+        jt.append(joint_of.get(cat, default))
 
     # centres from mask-covered moving points only (uncovered moving points include static noise)
     centers = [stat.mean(0)] + [Dk[lab_k == i].mean(0) for i in range(len(keep))]

@@ -263,8 +263,9 @@ def main():
 
     views = {s: list_views(a.scene_dir, s) for s in STATES}
     n = a.vlm_views
-    idx = np.linspace(0, len(views["start"]) - 1, n).round().astype(int)
-    sheet = [fit(im, a.vlm_size, fg) for im, fg in (load_rgb(views[s][i]) for s in STATES for i in idx)]
+    # per state: real captures can have a different number of views in each state
+    idx = {s: np.linspace(0, len(views[s]) - 1, n).round().astype(int) for s in STATES}
+    sheet = [fit(im, a.vlm_size, fg) for im, fg in (load_rgb(views[s][i]) for s in STATES for i in idx[s])]
 
     vlm = None
     if a.parts_json:
@@ -276,7 +277,7 @@ def main():
         parsed = normalise_parts(extract_json(raw))
     timings["vlm_s"] = round(time.time() - t0, 1)
     log("VLM:", json.dumps(parsed))
-    json.dump({"raw": raw, "parsed": parsed, "sheet_views": idx.tolist()}, open(out / "vlm.json", "w"), indent=2)
+    json.dump({"raw": raw, "parsed": parsed, "sheet_views": {s: idx[s].tolist() for s in STATES}}, open(out / "vlm.json", "w"), indent=2)
     if not parsed["movable_parts"]:
         raise SystemExit("VLM returned no movable parts")
 
@@ -306,7 +307,7 @@ def main():
             name = os.path.splitext(os.path.basename(path))[0]
             np.savez_compressed(out / "masks" / s / f"{name}.npz", labels=lab,
                                 cats=np.array(cats, dtype=object), scores=np.array(scores, np.float32))
-            if vi in idx:
+            if vi in idx[s]:
                 overlay(image, lab).save(out / "vis" / f"{s}_{name}.jpg", quality=85)
             n_done += 1
         log(f"{s}: {n_done} views segmented ({time.time() - t1:.0f}s)")

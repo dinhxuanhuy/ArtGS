@@ -8,9 +8,9 @@ part-consistency loss during training. No ground-truth part count or joint type 
 
 The same code trains **plain ArtGS** or **SemArt**: the method is chosen by a config (or `--methods`).
 
-| | ArtGS | SemArt (`sem_v2_mask`) |
+| | ArtGS | SemArt (`semart`) |
 |---|---|---|
-| Number of parts K | given (`arguments/num_slots.json`) | Qwen3-VL count, corrected by the eigengap of the motion/mask affinity (silhouette) |
+| Number of parts K | given (`arguments/num_slots.json`) | Qwen3-VL count, corrected with motion: eigengap/silhouette, motion-verified instance counts, merging of clusters the masks say are one part |
 | Part centres | spectral clustering of moving Gaussians (positions only) | SAM3 masks from all views lifted onto moving Gaussians (`semart/lift.py`) |
 | Joint types | `train_predict.py` (learned rotation > 10° → revolute) | Qwen3-VL, overridden where the learned rotation clearly contradicts it |
 | Extra loss | – | 2D part consistency on rendered slot probabilities (`semart/mask_loss.py`) |
@@ -71,8 +71,9 @@ is one dict entry.
 | Method | K / centres | Joint types | 2D loss |
 |---|---|---|---|
 | `artgs` | GT K / spectral | motion (`train_predict.py`) | – |
-| `sem_v2_mask` (**SemArt**) | VLM + motion eigengap / lift | fused VLM + motion | yes (no static term, λ 0.03, until 10k) |
-| `sem_v2` | as above | fused | – |
+| `semart` (**SemArt, current = v3**) | VLM + motion (see `semart/lift.py`) / lift | fused VLM + motion | yes (no static term, λ 0.03, until 10k) |
+| `sem_v2_mask` | same preset, run with the v2 lift (results before 2026-11-13) | fused | yes |
+| `sem_v2` | as `sem_v2_mask` without the 2D loss | fused | – |
 | `sem_k`, `sem_vlm`, `sem_mask`, `sem_full` | v1 ablations (K from VLM only) | motion / VLM | –/yes |
 | `gtk_mask` | GT K / spectral | motion | yes |
 
@@ -134,8 +135,9 @@ Changes to ArtGS files are small and off by default: `train.py` / `train_predict
 
 ## Known limitations
 
-- K still depends on the VLM naming the parts: on `oven_101908` Qwen3-VL reported one oven door where there are
-  two, and merging the instances of a "count 1" category fused them.
+- K still depends on the VLM and SAM3 agreeing with the motion: on `scissor_11100` the two handles are segmented as
+  two parts while only one moves, giving one extra slot. When SAM3 finds no part at all, the lift falls back to
+  clustering moving points by position (as ArtGS) with K from the eigengap.
 - The preprocessing needs a GPU with ≥ 15 GB (Qwen3-VL-4B fp16 + SAM3).
 
 ## Credits

@@ -1,6 +1,6 @@
 {
-  "_comment": "SemArt (current model, sem_v2_mask): K from the VLM corrected by the motion eigengap, centres from lifted SAM3 masks, joint types fused VLM/motion, 2D part-consistency loss. Needs --semseg_dir from semart.preprocess.",
-  "methods": "sem_v2_mask",
+  "_comment": "SemArt (current model, method `semart` = v3): K from the VLM corrected by the motion eigengap, centres from lifted SAM3 masks, joint types fused VLM/motion, 2D part-consistency loss. Needs --semseg_dir from semart.preprocess.",
+  "methods": "semart",
   "iters": 20000,
   "res": 2,
   "seed": 0

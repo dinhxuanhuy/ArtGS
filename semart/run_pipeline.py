@@ -29,6 +29,10 @@ METHODS = {
     "sem_v2":      {"k": "sem", "joints": "fuse", "sem_loss": 0.0, "ksrc": "vlm_motion"},
     "sem_v2_mask": {"k": "sem", "joints": "fuse", "sem_loss": 0.03, "ksrc": "vlm_motion",
                     "sem_args": ["--sem_w_static", "0", "--sem_until_iter", "10000"]},
+    # current SemArt (v3, 2026-11-13): same preset as sem_v2_mask; the v3 changes live in semart/lift.py
+    # (motion-verified instance merging, motion-only fallback, merging of clusters the masks say are one part)
+    "semart":      {"k": "sem", "joints": "fuse", "sem_loss": 0.03, "ksrc": "vlm_motion",
+                    "sem_args": ["--sem_w_static", "0", "--sem_until_iter", "10000"]},
 }
 
 
